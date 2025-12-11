@@ -51,89 +51,89 @@ export default function ImpostazioniPage() {
 
       <div className="p-4 lg:p-6 space-y-6 max-w-3xl mx-auto">
         {/* Costi e Tariffe */}
-        <div className="bg-white rounded-xl shadow-sm">
-          <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-            <Euro className="w-5 h-5 text-blue-600" />
-            <h2 className="font-semibold text-gray-900">Costi e Tariffe</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
+            <Euro className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="font-semibold text-gray-900 dark:text-white">Costi e Tariffe</h2>
           </div>
           <div className="p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Biancheria</p>
-                <p className="text-sm text-gray-500">Costo per persona</p>
+                <p className="font-medium text-gray-900 dark:text-white">Biancheria</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Costo per persona</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-500">EUR</span>
+                <span className="text-gray-500 dark:text-gray-400">EUR</span>
                 <input
                   type="number"
                   value={settings.biancheria}
                   onChange={(e) => handleChange('biancheria', parseInt(e.target.value) || 0)}
-                  className="w-20 px-3 py-2 text-right border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-20 px-3 py-2 text-right border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Tassa di Soggiorno</p>
-                <p className="text-sm text-gray-500">Per adulto per notte</p>
+                <p className="font-medium text-gray-900 dark:text-white">Tassa di Soggiorno</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Per adulto per notte</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-500">EUR</span>
+                <span className="text-gray-500 dark:text-gray-400">EUR</span>
                 <input
                   type="number"
                   value={settings.tassaSoggiorno}
                   onChange={(e) => handleChange('tassaSoggiorno', parseInt(e.target.value) || 0)}
-                  className="w-20 px-3 py-2 text-right border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-20 px-3 py-2 text-right border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Cauzione Default</p>
-                <p className="text-sm text-gray-500">Importo rimborsabile</p>
+                <p className="font-medium text-gray-900 dark:text-white">Cauzione Default</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Importo rimborsabile</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-500">EUR</span>
+                <span className="text-gray-500 dark:text-gray-400">EUR</span>
                 <input
                   type="number"
                   value={settings.cauzioneDefault}
                   onChange={(e) => handleChange('cauzioneDefault', parseInt(e.target.value) || 0)}
-                  className="w-20 px-3 py-2 text-right border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-20 px-3 py-2 text-right border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Acconto</p>
-                <p className="text-sm text-gray-500">Percentuale alla prenotazione</p>
+                <p className="font-medium text-gray-900 dark:text-white">Acconto</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Percentuale alla prenotazione</p>
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
                   value={settings.accontoPercentuale}
                   onChange={(e) => handleChange('accontoPercentuale', parseInt(e.target.value) || 0)}
-                  className="w-20 px-3 py-2 text-right border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-20 px-3 py-2 text-right border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <span className="text-gray-500">%</span>
+                <span className="text-gray-500 dark:text-gray-400">%</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Notifiche */}
-        <div className="bg-white rounded-xl shadow-sm">
-          <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-            <Bell className="w-5 h-5 text-blue-600" />
-            <h2 className="font-semibold text-gray-900">Notifiche</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
+            <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="font-semibold text-gray-900 dark:text-white">Notifiche</h2>
           </div>
           <div className="p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Notifiche Email</p>
-                <p className="text-sm text-gray-500">Ricevi aggiornamenti via email</p>
+                <p className="font-medium text-gray-900 dark:text-white">Notifiche Email</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Ricevi aggiornamenti via email</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -148,8 +148,8 @@ export default function ImpostazioniPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Notifiche Push</p>
-                <p className="text-sm text-gray-500">Notifiche sul dispositivo</p>
+                <p className="font-medium text-gray-900 dark:text-white">Notifiche Push</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Notifiche sul dispositivo</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -164,8 +164,8 @@ export default function ImpostazioniPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Promemoria Check-in</p>
-                <p className="text-sm text-gray-500">Notifica giorno prima del check-in</p>
+                <p className="font-medium text-gray-900 dark:text-white">Promemoria Check-in</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Notifica giorno prima del check-in</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -180,8 +180,8 @@ export default function ImpostazioniPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Promemoria Pagamenti</p>
-                <p className="text-sm text-gray-500">Notifica pagamenti in scadenza</p>
+                <p className="font-medium text-gray-900 dark:text-white">Promemoria Pagamenti</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Notifica pagamenti in scadenza</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -197,20 +197,20 @@ export default function ImpostazioniPage() {
         </div>
 
         {/* Preferenze */}
-        <div className="bg-white rounded-xl shadow-sm">
-          <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-            <Globe className="w-5 h-5 text-blue-600" />
-            <h2 className="font-semibold text-gray-900">Preferenze</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
+            <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="font-semibold text-gray-900 dark:text-white">Preferenze</h2>
           </div>
           <div className="p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Lingua</p>
+                <p className="font-medium text-gray-900 dark:text-white">Lingua</p>
               </div>
               <select
                 value={settings.lingua}
                 onChange={(e) => handleChange('lingua', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="it">Italiano</option>
                 <option value="en">English</option>
@@ -220,12 +220,12 @@ export default function ImpostazioniPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Valuta</p>
+                <p className="font-medium text-gray-900 dark:text-white">Valuta</p>
               </div>
               <select
                 value={settings.valuta}
                 onChange={(e) => handleChange('valuta', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="EUR">EUR - Euro</option>
                 <option value="USD">USD - Dollaro</option>
@@ -235,12 +235,12 @@ export default function ImpostazioniPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Formato Data</p>
+                <p className="font-medium text-gray-900 dark:text-white">Formato Data</p>
               </div>
               <select
                 value={settings.formatoData}
                 onChange={(e) => handleChange('formatoData', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="dd/mm/yyyy">DD/MM/YYYY</option>
                 <option value="mm/dd/yyyy">MM/DD/YYYY</option>
@@ -251,23 +251,23 @@ export default function ImpostazioniPage() {
         </div>
 
         {/* App Info */}
-        <div className="bg-white rounded-xl shadow-sm">
-          <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-            <Smartphone className="w-5 h-5 text-blue-600" />
-            <h2 className="font-semibold text-gray-900">Informazioni App</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
+            <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="font-semibold text-gray-900 dark:text-white">Informazioni App</h2>
           </div>
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Versione</span>
-              <span className="font-medium text-gray-900">1.0.0</span>
+              <span className="text-gray-500 dark:text-gray-400">Versione</span>
+              <span className="font-medium text-gray-900 dark:text-white">1.0.0</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Database</span>
-              <span className="font-medium text-gray-900">SQLite</span>
+              <span className="text-gray-500 dark:text-gray-400">Database</span>
+              <span className="font-medium text-gray-900 dark:text-white">SQLite</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Ultimo backup</span>
-              <span className="font-medium text-gray-900">Mai</span>
+              <span className="text-gray-500 dark:text-gray-400">Ultimo backup</span>
+              <span className="font-medium text-gray-900 dark:text-white">Mai</span>
             </div>
           </div>
         </div>

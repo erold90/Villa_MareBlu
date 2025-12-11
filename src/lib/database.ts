@@ -7,7 +7,25 @@ export async function getPrenotazioni() {
       appartamento: true,
       ospite: true,
     },
-    orderBy: { checkIn: 'desc' },
+    orderBy: { checkIn: 'asc' },
+  })
+}
+
+// Ottieni tutte le prenotazioni future (per l'assistente AI)
+export async function getPrenotazioniFuture() {
+  const oggi = new Date()
+  oggi.setHours(0, 0, 0, 0)
+
+  return prisma.prenotazione.findMany({
+    where: {
+      checkOut: { gte: oggi },
+      stato: { notIn: ['cancelled'] },
+    },
+    include: {
+      appartamento: true,
+      ospite: true,
+    },
+    orderBy: { checkIn: 'asc' },
   })
 }
 
@@ -202,26 +220,32 @@ export async function getTaskPendenti() {
 // Formatta i dati per il contesto dell'assistente
 export async function getContestoAssistente() {
   const [
-    prenotazioni,
+    tuttePrenotazioni,
+    prenotazioniFuture,
     appartamenti,
     statistiche,
     prossimiMovimenti,
     taskPendenti,
+    tuttiOspiti,
   ] = await Promise.all([
-    getPrenotazioni(),
+    getPrenotazioni(), // TUTTE le prenotazioni (storiche + future)
+    getPrenotazioniFuture(), // Solo prenotazioni future per verifica disponibilità
     getAppartamenti(),
     getStatistichePrenotazioni(),
     getProssimiMovimenti(14),
     getTaskPendenti(),
+    getOspiti(), // TUTTI gli ospiti
   ])
 
   const oggi = new Date()
 
-  // Formatta prenotazioni
-  const prenotazioniFormattate = prenotazioni.map((p) => ({
+  // Formatta TUTTE le prenotazioni future per verifica disponibilità
+  const prenotazioniFutureFormattate = prenotazioniFuture.map((p) => ({
     id: p.id,
+    appartamentoId: p.appartamentoId,
     appartamento: p.appartamento.nome,
     ospite: `${p.ospite.nome} ${p.ospite.cognome}`,
+    ospiteId: p.ospiteId,
     checkIn: p.checkIn.toISOString().split('T')[0],
     checkOut: p.checkOut.toISOString().split('T')[0],
     adulti: p.numAdulti,
@@ -233,6 +257,39 @@ export async function getContestoAssistente() {
     accontoPagato: p.accontoPagato,
     saldo: p.saldo,
     saldoPagato: p.saldoPagato,
+  }))
+
+  // Formatta TUTTE le prenotazioni (storico completo)
+  const tuttePrenotazioniFormattate = tuttePrenotazioni.map((p) => ({
+    id: p.id,
+    appartamentoId: p.appartamentoId,
+    appartamento: p.appartamento.nome,
+    ospite: `${p.ospite.nome} ${p.ospite.cognome}`,
+    ospiteId: p.ospiteId,
+    checkIn: p.checkIn.toISOString().split('T')[0],
+    checkOut: p.checkOut.toISOString().split('T')[0],
+    adulti: p.numAdulti,
+    bambini: p.numBambini,
+    totale: p.totale,
+    stato: p.stato,
+    fonte: p.fonte,
+    acconto: p.acconto,
+    accontoPagato: p.accontoPagato,
+    saldo: p.saldo,
+    saldoPagato: p.saldoPagato,
+  }))
+
+  // Formatta TUTTI gli ospiti
+  const ospitiFormattati = tuttiOspiti.map((o) => ({
+    id: o.id,
+    nome: o.nome,
+    cognome: o.cognome,
+    nomeCompleto: `${o.nome} ${o.cognome}`,
+    email: o.email,
+    telefono: o.telefono,
+    nazione: o.nazione,
+    citta: o.citta,
+    totalePrenotazioni: o._count.prenotazioni,
   }))
 
   // Formatta appartamenti con disponibilità
@@ -268,7 +325,12 @@ export async function getContestoAssistente() {
     dataOggi: oggi.toISOString().split('T')[0],
     statistiche,
     appartamenti: appartamentiFormattati,
-    prenotazioni: prenotazioniFormattate,
+    // Prenotazioni future per verifica disponibilità
+    prenotazioniFuture: prenotazioniFutureFormattate,
+    // Storico completo prenotazioni
+    tuttePrenotazioni: tuttePrenotazioniFormattate,
+    // Tutti gli ospiti
+    ospiti: ospitiFormattati,
     prossimiCheckIn: checkInsFormattati,
     prossimiCheckOut: checkOutsFormattati,
     taskPendenti: taskPendenti.map((t) => ({

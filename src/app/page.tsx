@@ -126,7 +126,7 @@ export default function DashboardPage() {
       <div className="p-4 lg:p-6 space-y-6">
         {/* Banner Stagione */}
         <div className={cn(
-          'rounded-xl p-4 flex items-center justify-between',
+          'rounded-xl p-4 flex items-center justify-between dark:bg-opacity-20',
           stagione.badge.colore
         )}>
           <div className="flex items-center gap-3">
@@ -172,47 +172,47 @@ export default function DashboardPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Prenotazioni Stagione */}
-          <div className="stat-card bg-white rounded-xl p-4 lg:p-6 shadow-sm">
+          <div className="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 lg:p-3 bg-blue-100 rounded-lg">
-                <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
+              <div className="p-2 lg:p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
-            <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stats.prenotazioniStagione}</p>
-            <p className="text-xs lg:text-sm text-gray-500">Prenotazioni {stagione.anno}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.prenotazioniStagione}</p>
+            <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">Prenotazioni {stagione.anno}</p>
           </div>
 
           {/* Ospiti */}
-          <div className="stat-card bg-white rounded-xl p-4 lg:p-6 shadow-sm">
+          <div className="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 lg:p-3 bg-emerald-100 rounded-lg">
-                <Users className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-600" />
+              <div className="p-2 lg:p-3 bg-emerald-100 dark:bg-emerald-900 rounded-lg">
+                <Users className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
-            <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stats.ospiti}</p>
-            <p className="text-xs lg:text-sm text-gray-500">Ospiti stagione {stagione.anno}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.ospiti}</p>
+            <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">Ospiti stagione {stagione.anno}</p>
           </div>
 
           {/* Incasso Stagione */}
-          <div className="stat-card bg-white rounded-xl p-4 lg:p-6 shadow-sm">
+          <div className="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 lg:p-3 bg-amber-100 rounded-lg">
-                <Wallet className="w-5 h-5 lg:w-6 lg:h-6 text-amber-600" />
+              <div className="p-2 lg:p-3 bg-amber-100 dark:bg-amber-900 rounded-lg">
+                <Wallet className="w-5 h-5 lg:w-6 lg:h-6 text-amber-600 dark:text-amber-400" />
               </div>
             </div>
-            <p className="text-2xl lg:text-3xl font-bold text-gray-900">{formatPrice(stats.incassoStagione)}</p>
-            <p className="text-xs lg:text-sm text-gray-500">Incasso stagione {stagione.anno}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{formatPrice(stats.incassoStagione)}</p>
+            <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">Incasso stagione {stagione.anno}</p>
           </div>
 
           {/* Tasso Occupazione */}
-          <div className="stat-card bg-white rounded-xl p-4 lg:p-6 shadow-sm">
+          <div className="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 lg:p-3 bg-purple-100 rounded-lg">
-                <Home className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600" />
+              <div className="p-2 lg:p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                <Home className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
-            <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stats.tassoOccupazione}%</p>
-            <p className="text-xs lg:text-sm text-gray-500">Occupazione {stagione.anno}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{stats.tassoOccupazione}%</p>
+            <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">Occupazione {stagione.anno}</p>
           </div>
         </div>
 
@@ -220,8 +220,8 @@ export default function DashboardPage() {
         {haDataStagione && (
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Revenue Chart */}
-            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-4">Incassi Stagione {stagione.anno}</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-sm">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Incassi Stagione {stagione.anno}</h3>
               <div className="h-64" style={{ minWidth: 0, minHeight: 256 }}>
                 {isClient && (
                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
@@ -254,8 +254,8 @@ export default function DashboardPage() {
             </div>
 
             {/* Occupancy Chart */}
-            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-4">Occupazione per Appartamento {stagione.anno}</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-sm">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Occupazione per Appartamento {stagione.anno}</h3>
               <div className="h-64" style={{ minWidth: 0, minHeight: 256 }}>
                 {isClient && (
                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
@@ -279,19 +279,19 @@ export default function DashboardPage() {
         {/* Activity Row */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Upcoming Check-ins */}
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Check-in in arrivo</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Check-in in arrivo</h3>
               <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
                 {checkIns.length}
               </span>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
               {checkIns.length === 0 ? (
-                <div className="p-4 text-sm text-gray-500">Nessun check-in nei prossimi 7 giorni</div>
+                <div className="p-4 text-sm text-gray-500 dark:text-gray-400">Nessun check-in nei prossimi 7 giorni</div>
               ) : (
                 checkIns.map((checkin) => (
-                  <div key={checkin.id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div key={checkin.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <div className="flex items-center gap-3">
                       <div
                         className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-semibold"
@@ -300,18 +300,18 @@ export default function DashboardPage() {
                         {checkin.appartamento}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{checkin.ospite}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">{checkin.ospite}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {formatDateShort(checkin.data)} - {checkin.ospiti} ospiti
                         </p>
                       </div>
-                      <CheckCircle2 className="w-5 h-5 text-gray-300" />
+                      <CheckCircle2 className="w-5 h-5 text-gray-300 dark:text-gray-500" />
                     </div>
                   </div>
                 ))
               )}
             </div>
-            <div className="p-4 border-t border-gray-100">
+            <div className="p-4 border-t border-gray-100 dark:border-gray-700">
               <a href="/prenotazioni" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
                 Vedi tutte <ArrowRight className="w-4 h-4" />
               </a>
@@ -319,19 +319,19 @@ export default function DashboardPage() {
           </div>
 
           {/* Upcoming Check-outs */}
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Check-out in uscita</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Check-out in uscita</h3>
               <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
                 {checkOuts.length}
               </span>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
               {checkOuts.length === 0 ? (
-                <div className="p-4 text-sm text-gray-500">Nessun check-out nei prossimi 7 giorni</div>
+                <div className="p-4 text-sm text-gray-500 dark:text-gray-400">Nessun check-out nei prossimi 7 giorni</div>
               ) : (
                 checkOuts.map((checkout) => (
-                  <div key={checkout.id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div key={checkout.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <div className="flex items-center gap-3">
                       <div
                         className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-semibold"
@@ -340,18 +340,18 @@ export default function DashboardPage() {
                         {checkout.appartamento}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{checkout.ospite}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">{checkout.ospite}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {formatDateShort(checkout.data)} - {checkout.ospiti} ospiti
                         </p>
                       </div>
-                      <Clock className="w-5 h-5 text-gray-300" />
+                      <Clock className="w-5 h-5 text-gray-300 dark:text-gray-500" />
                     </div>
                   </div>
                 ))
               )}
             </div>
-            <div className="p-4 border-t border-gray-100">
+            <div className="p-4 border-t border-gray-100 dark:border-gray-700">
               <a href="/prenotazioni" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
                 Vedi tutte <ArrowRight className="w-4 h-4" />
               </a>
@@ -361,13 +361,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Apartments Status */}
-        <div className="bg-white rounded-xl shadow-sm">
-          <div className="p-4 lg:p-6 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">Stato Appartamenti Oggi</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+          <div className="p-4 lg:p-6 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Stato Appartamenti Oggi</h3>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-gray-100">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-gray-100 dark:bg-gray-700">
             {appartamenti.map((app) => (
-              <div key={app.id} className="bg-white p-4 lg:p-6">
+              <div key={app.id} className="bg-white dark:bg-gray-800 p-4 lg:p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div
                     className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-lg"
@@ -376,24 +376,24 @@ export default function DashboardPage() {
                     {app.id}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{app.nome}</p>
-                    <p className="text-sm text-gray-500">{app.postiLetto} posti letto</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{app.nome}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{app.postiLetto} posti letto</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     'w-3 h-3 rounded-full',
-                    app.occupato ? 'bg-green-500' : 'bg-gray-300'
+                    app.occupato ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
                   )} />
                   <span className={cn(
                     'text-sm font-medium',
-                    app.occupato ? 'text-green-700' : 'text-gray-500'
+                    app.occupato ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
                   )}>
                     {app.occupato ? 'Occupato' : 'Libero'}
                   </span>
                 </div>
                 {app.ospiteCorrente && (
-                  <p className="text-xs text-gray-500 mt-1">{app.ospiteCorrente}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{app.ospiteCorrente}</p>
                 )}
               </div>
             ))}
