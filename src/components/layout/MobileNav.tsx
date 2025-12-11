@@ -31,7 +31,7 @@ export default function MobileNav() {
         const response = await fetch('/api/dashboard')
         if (response.ok) {
           const data = await response.json()
-          // Conta check-in imminenti (prossimi 2 giorni) come notifiche
+          // Conta solo check-in imminenti (prossimi 2 giorni) come notifiche
           const today = new Date()
           const twoDaysFromNow = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000)
 
@@ -40,11 +40,7 @@ export default function MobileNav() {
             return checkInDate <= twoDaysFromNow
           }).length || 0
 
-          const urgentTasks = data.tasks?.filter((t: { priorita: string }) =>
-            t.priorita === 'urgent' || t.priorita === 'high'
-          ).length || 0
-
-          setNotificationCount(urgentCheckIns + urgentTasks)
+          setNotificationCount(urgentCheckIns)
         }
       } catch (error) {
         console.error('Errore caricamento notifiche:', error)
