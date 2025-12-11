@@ -6,24 +6,60 @@ import { getDateStagione, getStagioneCorrente } from '@/lib/stagione'
 const NOTTI_FERMO_PULIZIA = 6 // Pulizia necessaria se appartamento fermo 6+ notti prima del check-in
 
 /**
- * Calcola le pulizie programmate e i suggerimenti
+ * Helper: Ottieni il lunedì della settimana di una data
+ */
+function getLunediSettimana(data: Date): Date {
+  const d = new Date(data)
+  d.setHours(0, 0, 0, 0)
+  const giorno = d.getDay()
+  const diff = giorno === 0 ? -6 : 1 - giorno // Se domenica, vai indietro di 6 giorni
+  d.setDate(d.getDate() + diff)
+  return d
+}
+
+/**
+ * Helper: Ottieni la domenica della settimana di una data
+ */
+function getDomenicaSettimana(data: Date): Date {
+  const lunedi = getLunediSettimana(data)
+  const domenica = new Date(lunedi)
+  domenica.setDate(lunedi.getDate() + 6)
+  return domenica
+}
+
+/**
+ * Interfaccia per una pulizia raggruppata
+ */
+interface PuliziaRaw {
+  appartamentoId: number
+  checkOutDate: Date
+  hasCheckInSameDay: boolean
+  checkInDate?: Date
+  tipo: 'cambio_ospiti' | 'fine_soggiorno' | 'pre_checkin' | 'apertura_stagione' | 'chiusura_stagione'
+  note: string
+  flessibile: boolean // true se può essere spostata, false se obbligatoria quel giorno
+}
+
+/**
+ * Calcola le pulizie programmate con raggruppamento settimanale intelligente
+ *
+ * LOGICA PRINCIPALE:
+ * - Le signore delle pulizie vengono UNA VOLTA a settimana
+ * - Il giorno viene scelto in base all'ULTIMO check-out della settimana
+ * - Eccezione: i "cambio ospiti" (check-out + check-in stesso giorno) sono obbligatori quel giorno
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const dataInizio = searchParams.get('da')
-      ? new Date(searchParams.get('da')!)
-      : new Date()
-    const dataFine = searchParams.get('a')
-      ? new Date(searchParams.get('a')!)
-      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Default: prossimi 30 giorni
+    const annoParam = searchParams.get('anno')
+    const anno = annoParam ? parseInt(annoParam) : getStagioneCorrente()
 
-    // Normalizza le date
-    dataInizio.setHours(0, 0, 0, 0)
-    dataFine.setHours(23, 59, 59, 999)
+    // Ottieni date stagione
+    const { inizio: inizioStagione, fine: fineStagione } = getDateStagione(anno)
 
-    const stagioneCorrente = getStagioneCorrente()
-    const { inizio: inizioStagione, fine: fineStagione } = getDateStagione(stagioneCorrente)
+    // Estendi l'inizio di 2 settimane per catturare prenotazioni anticipate
+    const inizioEsteso = new Date(inizioStagione)
+    inizioEsteso.setDate(inizioEsteso.getDate() - 14)
 
     // Recupera tutti gli appartamenti attivi
     const appartamenti = await prisma.appartamento.findMany({
@@ -31,253 +67,309 @@ export async function GET(request: NextRequest) {
       orderBy: { id: 'asc' },
     })
 
-    // Recupera le prenotazioni nel periodo (e anche prima per capire lo stato)
+    // Recupera tutte le prenotazioni della stagione
     const prenotazioni = await prisma.prenotazione.findMany({
       where: {
         stato: { notIn: ['cancelled'] },
         OR: [
-          { checkOut: { gte: dataInizio, lte: dataFine } },
-          { checkIn: { gte: dataInizio, lte: dataFine } },
-          // Includi anche prenotazioni che coprono il periodo
-          { AND: [{ checkIn: { lte: dataInizio } }, { checkOut: { gte: dataFine } }] },
+          { checkIn: { gte: inizioEsteso, lte: fineStagione } },
+          { checkOut: { gte: inizioEsteso, lte: fineStagione } },
         ],
       },
       orderBy: { checkIn: 'asc' },
     })
 
-    // Recupera le pulizie già salvate nel periodo
+    // Recupera le pulizie già salvate nel database
     const pulizieEsistenti = await prisma.pulizia.findMany({
       where: {
-        data: { gte: dataInizio, lte: dataFine },
+        data: { gte: inizioEsteso, lte: fineStagione },
         stato: { not: 'annullata' },
       },
       orderBy: { data: 'asc' },
     })
 
-    // Mappa pulizie esistenti per chiave univoca (appartamentoId + data)
+    // Mappa pulizie esistenti per chiave univoca
     const pulizieMap = new Map<string, typeof pulizieEsistenti[0]>()
     pulizieEsistenti.forEach(p => {
       const key = `${p.appartamentoId}-${p.data.toISOString().split('T')[0]}`
       pulizieMap.set(key, p)
     })
 
-    // Genera pulizie automatiche basate sulla logica:
-    // 1. Pulizia al check-out SE c'è un check-in lo stesso giorno (cambio ospiti)
-    // 2. Pulizia il giorno del check-in SE l'appartamento è fermo da 6+ notti
-    // 3. Pulizia apertura stagione (giorno prima del primo check-in)
-    // 4. Pulizia chiusura stagione (ultimo check-out)
-    const pulizieAutomatiche: any[] = []
-    const suggerimenti: any[] = [] // Non più usati, ma manteniamo per compatibilità
+    // STEP 1: Raccogli tutte le pulizie "raw" (non ancora raggruppate)
+    const pulizieRaw: PuliziaRaw[] = []
 
     for (const app of appartamenti) {
-      const prenotazioniApp = prenotazioni.filter(p => p.appartamentoId === app.id)
+      const prenotazioniApp = prenotazioni
+        .filter(p => p.appartamentoId === app.id)
+        .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime())
 
-      // Trova primo check-in e ultimo check-out della stagione per questo appartamento
-      const inizioStagioneEsteso = new Date(inizioStagione)
-      inizioStagioneEsteso.setDate(inizioStagioneEsteso.getDate() - 14) // 14 giorni prima del 1 giugno
+      if (prenotazioniApp.length === 0) continue
 
-      const prenotazioniStagione = await prisma.prenotazione.findMany({
-        where: {
-          appartamentoId: app.id,
-          stato: { notIn: ['cancelled'] },
-          checkIn: { gte: inizioStagioneEsteso, lte: fineStagione },
-        },
-        orderBy: { checkIn: 'asc' },
+      const primoCheckIn = prenotazioniApp[0].checkIn
+      const ultimoCheckOut = prenotazioniApp[prenotazioniApp.length - 1].checkOut
+
+      // Pulizia APERTURA STAGIONE (1 giorno prima del primo check-in)
+      const dataApertura = new Date(primoCheckIn)
+      dataApertura.setDate(dataApertura.getDate() - 1)
+      dataApertura.setHours(0, 0, 0, 0)
+
+      pulizieRaw.push({
+        appartamentoId: app.id,
+        checkOutDate: dataApertura,
+        hasCheckInSameDay: false,
+        tipo: 'apertura_stagione',
+        note: 'Preparazione inizio stagione',
+        flessibile: true, // Può essere raggruppata con altre
       })
 
-      const primoCheckIn = prenotazioniStagione[0]?.checkIn
-      const ultimoCheckOut = prenotazioniStagione[prenotazioniStagione.length - 1]?.checkOut
+      // Analizza ogni prenotazione
+      for (let i = 0; i < prenotazioniApp.length; i++) {
+        const pren = prenotazioniApp[i]
+        const prenSuccessiva = prenotazioniApp[i + 1]
+        const prenPrecedente = prenotazioniApp[i - 1]
 
-      // 1. Pulizia APERTURA STAGIONE (1 giorno prima del primo check-in)
-      if (primoCheckIn) {
-        const dataApertura = new Date(primoCheckIn)
-        dataApertura.setDate(dataApertura.getDate() - 1)
-        dataApertura.setHours(0, 0, 0, 0)
+        const checkOut = new Date(pren.checkOut)
+        checkOut.setHours(0, 0, 0, 0)
+        const checkIn = new Date(pren.checkIn)
+        checkIn.setHours(0, 0, 0, 0)
 
-        if (dataApertura >= dataInizio && dataApertura <= dataFine) {
-          const key = `${app.id}-${dataApertura.toISOString().split('T')[0]}`
-          const puliziaEsistente = pulizieMap.get(key)
+        // Verifica se c'è check-in lo stesso giorno del check-out
+        const hasCheckInSameDay = prenSuccessiva &&
+          new Date(prenSuccessiva.checkIn).toISOString().split('T')[0] === checkOut.toISOString().split('T')[0]
 
-          if (!puliziaEsistente) {
-            pulizieAutomatiche.push({
-              id: `auto-apertura-${app.id}`,
+        // Verifica se è l'ultimo check-out (chiusura stagione)
+        const isChiusura = checkOut.toISOString().split('T')[0] === new Date(ultimoCheckOut).toISOString().split('T')[0]
+
+        if (hasCheckInSameDay) {
+          // CAMBIO OSPITI - NON flessibile, deve essere fatto quel giorno
+          pulizieRaw.push({
+            appartamentoId: app.id,
+            checkOutDate: checkOut,
+            hasCheckInSameDay: true,
+            checkInDate: new Date(prenSuccessiva.checkIn),
+            tipo: 'cambio_ospiti',
+            note: 'Cambio ospiti stesso giorno',
+            flessibile: false,
+          })
+        } else if (isChiusura) {
+          // CHIUSURA STAGIONE - flessibile
+          pulizieRaw.push({
+            appartamentoId: app.id,
+            checkOutDate: checkOut,
+            hasCheckInSameDay: false,
+            tipo: 'chiusura_stagione',
+            note: 'Chiusura fine stagione',
+            flessibile: true,
+          })
+        } else if (prenSuccessiva) {
+          // C'è una prenotazione successiva ma NON lo stesso giorno
+          const checkInSucc = new Date(prenSuccessiva.checkIn)
+          checkInSucc.setHours(0, 0, 0, 0)
+          const giorniVuoti = Math.floor((checkInSucc.getTime() - checkOut.getTime()) / (1000 * 60 * 60 * 24))
+
+          if (giorniVuoti >= NOTTI_FERMO_PULIZIA) {
+            // Appartamento fermo a lungo - pulizia il giorno del check-in successivo
+            pulizieRaw.push({
               appartamentoId: app.id,
-              data: dataApertura.toISOString(),
-              tipo: 'apertura_stagione',
-              stato: 'da_fare',
-              orarioCheckout: null,
-              note: 'Preparazione appartamento per inizio stagione',
-              isAutomatic: true,
+              checkOutDate: checkInSucc, // La pulizia è il giorno del check-in
+              hasCheckInSameDay: false,
+              checkInDate: checkInSucc,
+              tipo: 'pre_checkin',
+              note: `Fermo da ${giorniVuoti} notti`,
+              flessibile: false, // Deve essere fatto prima del check-in
+            })
+          } else {
+            // Pulizia normale dopo check-out - flessibile
+            pulizieRaw.push({
+              appartamentoId: app.id,
+              checkOutDate: checkOut,
+              hasCheckInSameDay: false,
+              tipo: 'fine_soggiorno',
+              note: `Check-in tra ${giorniVuoti} giorni`,
+              flessibile: true,
             })
           }
         }
-      }
-
-      // Ordina le prenotazioni dell'appartamento per check-in
-      const prenotazioniOrdinate = prenotazioniApp.sort(
-        (a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime()
-      )
-
-      // Analizza ogni prenotazione
-      for (let i = 0; i < prenotazioniOrdinate.length; i++) {
-        const pren = prenotazioniOrdinate[i]
-        const prenPrecedente = i > 0 ? prenotazioniOrdinate[i - 1] : null
-        const prenSuccessiva = i < prenotazioniOrdinate.length - 1 ? prenotazioniOrdinate[i + 1] : null
-
-        const dataCheckout = new Date(pren.checkOut)
-        dataCheckout.setHours(0, 0, 0, 0)
-        const dataCheckIn = new Date(pren.checkIn)
-        dataCheckIn.setHours(0, 0, 0, 0)
-
-        // Verifica se è l'ultimo check-out della stagione
-        const isChiusuraStagione = ultimoCheckOut &&
-          dataCheckout.toISOString().split('T')[0] === new Date(ultimoCheckOut).toISOString().split('T')[0]
-
-        // CASO 1: Check-out con check-in lo stesso giorno (cambio ospiti)
-        if (prenSuccessiva) {
-          const checkInSuccessivo = new Date(prenSuccessiva.checkIn)
-          checkInSuccessivo.setHours(0, 0, 0, 0)
-
-          // Se il check-in successivo è lo stesso giorno del check-out
-          if (dataCheckout.getTime() === checkInSuccessivo.getTime()) {
-            if (dataCheckout >= dataInizio && dataCheckout <= dataFine) {
-              const key = `${app.id}-${dataCheckout.toISOString().split('T')[0]}`
-              const puliziaEsistente = pulizieMap.get(key)
-
-              if (!puliziaEsistente) {
-                pulizieAutomatiche.push({
-                  id: `auto-cambio-${pren.id}`,
-                  appartamentoId: app.id,
-                  data: dataCheckout.toISOString(),
-                  tipo: 'checkout',
-                  stato: 'da_fare',
-                  orarioCheckout: '10:00',
-                  note: 'Cambio ospiti - check-in stesso giorno',
-                  prenotazioneId: pren.id,
-                  isAutomatic: true,
-                })
-              }
-            }
-          }
-        }
-
-        // CASO 2: Check-in dopo appartamento fermo 6+ notti
-        if (prenPrecedente) {
-          const checkOutPrec = new Date(prenPrecedente.checkOut)
-          checkOutPrec.setHours(0, 0, 0, 0)
-
-          const nottiFermo = Math.floor(
-            (dataCheckIn.getTime() - checkOutPrec.getTime()) / (1000 * 60 * 60 * 24)
-          )
-
-          // Se fermo per 6+ notti, serve pulizia il giorno del check-in
-          if (nottiFermo >= NOTTI_FERMO_PULIZIA) {
-            if (dataCheckIn >= dataInizio && dataCheckIn <= dataFine) {
-              const key = `${app.id}-${dataCheckIn.toISOString().split('T')[0]}`
-              const puliziaEsistente = pulizieMap.get(key)
-
-              // Verifica che non ci sia già una pulizia per cambio ospiti quel giorno
-              const giaPuliziaCambio = pulizieAutomatiche.find(p =>
-                p.appartamentoId === app.id &&
-                p.data.split('T')[0] === dataCheckIn.toISOString().split('T')[0]
-              )
-
-              if (!puliziaEsistente && !giaPuliziaCambio) {
-                pulizieAutomatiche.push({
-                  id: `auto-fermo-${pren.id}`,
-                  appartamentoId: app.id,
-                  data: dataCheckIn.toISOString(),
-                  tipo: 'pre_checkin',
-                  stato: 'da_fare',
-                  orarioCheckout: null,
-                  note: `Appartamento fermo da ${nottiFermo} notti`,
-                  prenotazioneId: pren.id,
-                  isAutomatic: true,
-                })
-              }
-            }
-          }
-        } else {
-          // È la prima prenotazione - verifica distanza dall'apertura stagione
-          if (primoCheckIn) {
-            const dataApertura = new Date(primoCheckIn)
-            dataApertura.setDate(dataApertura.getDate() - 1)
-            // La pulizia apertura stagione è già gestita sopra
-          }
-        }
-
-        // CASO 3: Chiusura stagione (ultimo check-out)
-        if (isChiusuraStagione) {
-          if (dataCheckout >= dataInizio && dataCheckout <= dataFine) {
-            const key = `${app.id}-${dataCheckout.toISOString().split('T')[0]}`
-            const puliziaEsistente = pulizieMap.get(key)
-
-            // Verifica che non ci sia già una pulizia quel giorno
-            const giaPulizia = pulizieAutomatiche.find(p =>
-              p.appartamentoId === app.id &&
-              p.data.split('T')[0] === dataCheckout.toISOString().split('T')[0]
-            )
-
-            if (!puliziaEsistente && !giaPulizia) {
-              pulizieAutomatiche.push({
-                id: `auto-chiusura-${app.id}`,
-                appartamentoId: app.id,
-                data: dataCheckout.toISOString(),
-                tipo: 'chiusura_stagione',
-                stato: 'da_fare',
-                orarioCheckout: '10:00',
-                note: 'Chiusura stagione - ultimo check-out',
-                prenotazioneId: pren.id,
-                isAutomatic: true,
-              })
-            }
-          }
-        }
+        // Se non c'è prenotazione successiva e non è chiusura, è già gestito dalla chiusura
       }
     }
 
-    // Combina pulizie esistenti e automatiche
-    const tuttePulizie = [
-      ...pulizieEsistenti.map(p => ({
-        ...p,
-        data: p.data.toISOString(),
-        completataIl: p.completataIl?.toISOString() || null,
-        isAutomatic: false,
-      })),
-      ...pulizieAutomatiche,
-    ]
+    // STEP 2: Raggruppa per settimana e calcola il giorno ottimale
+    const settimanePulizie = new Map<string, {
+      lunedi: Date
+      domenica: Date
+      pulizieObbligatorie: Map<string, PuliziaRaw[]> // giorno -> pulizie non spostabili
+      pulizieFlessibili: PuliziaRaw[]
+      giornoConsigliato: Date | null
+      pulizieProgrammate: any[]
+    }>()
 
-    // Ordina per data
-    tuttePulizie.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+    // Raggruppa pulizie per settimana
+    pulizieRaw.forEach(p => {
+      const lunedi = getLunediSettimana(p.checkOutDate)
+      const chiaveSettimana = lunedi.toISOString().split('T')[0]
 
-    // Raggruppa per data
-    const puliziePerData: Record<string, any[]> = {}
-    tuttePulizie.forEach(p => {
-      const dataKey = new Date(p.data).toISOString().split('T')[0]
-      if (!puliziePerData[dataKey]) {
-        puliziePerData[dataKey] = []
+      if (!settimanePulizie.has(chiaveSettimana)) {
+        settimanePulizie.set(chiaveSettimana, {
+          lunedi,
+          domenica: getDomenicaSettimana(lunedi),
+          pulizieObbligatorie: new Map(),
+          pulizieFlessibili: [],
+          giornoConsigliato: null,
+          pulizieProgrammate: [],
+        })
       }
-      puliziePerData[dataKey].push(p)
+
+      const settimana = settimanePulizie.get(chiaveSettimana)!
+
+      if (!p.flessibile) {
+        // Pulizia obbligatoria in un giorno specifico
+        const giornoKey = p.checkOutDate.toISOString().split('T')[0]
+        if (!settimana.pulizieObbligatorie.has(giornoKey)) {
+          settimana.pulizieObbligatorie.set(giornoKey, [])
+        }
+        settimana.pulizieObbligatorie.get(giornoKey)!.push(p)
+      } else {
+        // Pulizia flessibile
+        settimana.pulizieFlessibili.push(p)
+      }
     })
 
-    // Calcola statistiche
+    // STEP 3: Per ogni settimana, calcola il giorno ottimale
+    settimanePulizie.forEach((settimana, chiaveSettimana) => {
+      // Trova tutti i giorni con pulizie obbligatorie
+      const giorniObbligatori = Array.from(settimana.pulizieObbligatorie.keys()).sort()
+
+      // Trova l'ultimo giorno della settimana con attività (obbligatorie o flessibili)
+      let ultimoGiorno: Date | null = null
+
+      // Considera i giorni obbligatori
+      if (giorniObbligatori.length > 0) {
+        ultimoGiorno = new Date(giorniObbligatori[giorniObbligatori.length - 1])
+      }
+
+      // Considera anche le pulizie flessibili
+      settimana.pulizieFlessibili.forEach(p => {
+        if (!ultimoGiorno || p.checkOutDate > ultimoGiorno) {
+          ultimoGiorno = p.checkOutDate
+        }
+      })
+
+      settimana.giornoConsigliato = ultimoGiorno
+
+      // Genera le pulizie programmate
+      // 1. Pulizie obbligatorie nei loro giorni
+      settimana.pulizieObbligatorie.forEach((pulizie, giorno) => {
+        pulizie.forEach(p => {
+          const key = `${p.appartamentoId}-${giorno}`
+          const puliziaDB = pulizieMap.get(key)
+
+          settimana.pulizieProgrammate.push({
+            id: puliziaDB?.id || `auto-${p.tipo}-${p.appartamentoId}-${giorno}`,
+            appartamentoId: p.appartamentoId,
+            data: new Date(giorno).toISOString(),
+            tipo: p.tipo,
+            stato: puliziaDB?.stato || 'da_fare',
+            note: p.note,
+            obbligatoria: true,
+            isAutomatic: !puliziaDB,
+          })
+        })
+      })
+
+      // 2. Pulizie flessibili spostate al giorno consigliato
+      if (ultimoGiorno && settimana.pulizieFlessibili.length > 0) {
+        const giornoKey = ultimoGiorno.toISOString().split('T')[0]
+
+        settimana.pulizieFlessibili.forEach(p => {
+          const key = `${p.appartamentoId}-${giornoKey}`
+          const puliziaDB = pulizieMap.get(key)
+
+          // Evita duplicati se c'è già una pulizia obbligatoria per lo stesso appartamento
+          const giaDuplicato = settimana.pulizieProgrammate.find(
+            pp => pp.appartamentoId === p.appartamentoId && pp.data.split('T')[0] === giornoKey
+          )
+
+          if (!giaDuplicato) {
+            settimana.pulizieProgrammate.push({
+              id: puliziaDB?.id || `auto-${p.tipo}-${p.appartamentoId}-${giornoKey}`,
+              appartamentoId: p.appartamentoId,
+              data: ultimoGiorno!.toISOString(),
+              dataOriginale: p.checkOutDate.toISOString(),
+              tipo: p.tipo,
+              stato: puliziaDB?.stato || 'da_fare',
+              note: p.note,
+              obbligatoria: false,
+              spostata: p.checkOutDate.toISOString().split('T')[0] !== giornoKey,
+              isAutomatic: !puliziaDB,
+            })
+          }
+        })
+      }
+    })
+
+    // STEP 4: Formatta risposta come array di "giornate pulizie"
+    const giornatePulizie: any[] = []
+
+    settimanePulizie.forEach((settimana, chiaveSettimana) => {
+      if (settimana.pulizieProgrammate.length === 0) return
+
+      // Raggruppa per giorno effettivo
+      const perGiorno = new Map<string, any[]>()
+      settimana.pulizieProgrammate.forEach(p => {
+        const giorno = p.data.split('T')[0]
+        if (!perGiorno.has(giorno)) {
+          perGiorno.set(giorno, [])
+        }
+        perGiorno.get(giorno)!.push(p)
+      })
+
+      perGiorno.forEach((pulizie, giorno) => {
+        const data = new Date(giorno)
+        const numObbligatorie = pulizie.filter((p: any) => p.obbligatoria).length
+        const numSpostate = pulizie.filter((p: any) => p.spostata).length
+
+        giornatePulizie.push({
+          data: data.toISOString(),
+          settimana: chiaveSettimana,
+          giorno: ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'][data.getDay()],
+          pulizie: pulizie.sort((a: any, b: any) => a.appartamentoId - b.appartamentoId),
+          totaleAppartamenti: pulizie.length,
+          appartamentiObbligatori: numObbligatorie,
+          appartamentiSpostati: numSpostate,
+          piuVisite: perGiorno.size > 1, // Se ci sono più giorni nella settimana
+        })
+      })
+    })
+
+    // Ordina per data
+    giornatePulizie.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+
+    // Statistiche
+    const oggi = new Date()
+    oggi.setHours(0, 0, 0, 0)
+
+    const giornatePassate = giornatePulizie.filter(g => new Date(g.data) < oggi)
+    const giornateFuture = giornatePulizie.filter(g => new Date(g.data) >= oggi)
+    const prossimaGiornata = giornateFuture[0] || null
+
     const stats = {
-      totale: tuttePulizie.length,
-      daFare: tuttePulizie.filter(p => p.stato === 'da_fare').length,
-      completate: tuttePulizie.filter(p => p.stato === 'completata').length,
-      suggerimenti: suggerimenti.length,
+      totaleGiornate: giornatePulizie.length,
+      giornateFatte: giornatePassate.length,
+      giornateDaFare: giornateFuture.length,
+      prossimaGiornata: prossimaGiornata ? {
+        data: prossimaGiornata.data,
+        giorno: prossimaGiornata.giorno,
+        appartamenti: prossimaGiornata.totaleAppartamenti,
+      } : null,
+      settimaneConPiuVisite: giornatePulizie.filter(g => g.piuVisite).length / 2, // Diviso 2 perché conta ogni giornata
     }
 
     return NextResponse.json({
-      pulizie: tuttePulizie,
-      puliziePerData,
-      suggerimenti,
+      anno,
+      giornatePulizie,
       stats,
       appartamenti: appartamenti.map(a => ({ id: a.id, nome: a.nome })),
-      periodo: {
-        da: dataInizio.toISOString(),
-        a: dataFine.toISOString(),
-      },
     })
   } catch (error) {
     console.error('Errore API Pulizie:', error)
