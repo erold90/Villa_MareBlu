@@ -52,6 +52,32 @@ const statoConfig: Record<string, { label: string; className: string }> = {
   cancelled: { label: 'Cancellata', className: 'bg-red-100 text-red-800' },
 }
 
+// Determina lo stato visivo basandosi su stato prenotazione + acconto pagato
+function getStatoVisivo(pren: Prenotazione): { label: string; className: string } {
+  if (pren.stato === 'cancelled') return statoConfig.cancelled
+  if (pren.stato === 'completed') return statoConfig.completed
+  if (pren.stato === 'checkedin') return statoConfig.checkedin
+
+  // Per stati pending/confirmed, controlla se l'acconto è pagato
+  if (!pren.accontoPagato) {
+    return { label: 'In attesa', className: 'bg-yellow-100 text-yellow-800' }
+  }
+  return { label: 'Confermata', className: 'bg-green-100 text-green-800' }
+}
+
+// Determina il colore della barra nel calendario (stato + acconto)
+function getStatoColore(pren: Prenotazione): string {
+  if (pren.stato === 'cancelled') return 'bg-red-400'
+  if (pren.stato === 'completed') return 'bg-gray-400'
+  if (pren.stato === 'checkedin') return 'bg-blue-500'
+
+  // Per stati pending/confirmed, controlla se l'acconto è pagato
+  if (!pren.accontoPagato) {
+    return 'bg-yellow-400' // In attesa (acconto non pagato)
+  }
+  return 'bg-green-500' // Confermata (acconto pagato)
+}
+
 const fonteConfig: Record<string, { label: string; className: string }> = {
   direct: { label: 'Diretto', className: 'bg-purple-100 text-purple-700' },
   airbnb: { label: 'Airbnb', className: 'bg-rose-100 text-rose-700' },
@@ -342,7 +368,7 @@ export default function CalendarioPage() {
                                   onClick={() => handlePrenotazioneClick(pren)}
                                   className={cn(
                                     'absolute top-2 bottom-2 flex items-center justify-center text-white text-xs font-medium cursor-pointer hover:opacity-80 hover:scale-[1.02] transition-all',
-                                    statoColors[pren.stato] || 'bg-green-500',
+                                    getStatoColore(pren),
                                     isCheckIn(day, pren) ? 'left-0 rounded-l-lg' : 'left-0',
                                     isCheckOut(day, pren) ? 'right-0 rounded-r-lg' : 'right-0'
                                   )}
@@ -502,8 +528,8 @@ export default function CalendarioPage() {
                     {selectedPrenotazione.appartamentoNome}
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className={cn('text-xs px-2 py-1 rounded-full font-medium', statoConfig[selectedPrenotazione.stato]?.className)}>
-                      {statoConfig[selectedPrenotazione.stato]?.label}
+                    <span className={cn('text-xs px-2 py-1 rounded-full font-medium', getStatoVisivo(selectedPrenotazione).className)}>
+                      {getStatoVisivo(selectedPrenotazione).label}
                     </span>
                     <span className={cn('text-xs px-2 py-1 rounded-full font-medium', fonteConfig[selectedPrenotazione.fonte]?.className)}>
                       {fonteConfig[selectedPrenotazione.fonte]?.label}

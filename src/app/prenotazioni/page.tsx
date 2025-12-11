@@ -56,6 +56,28 @@ const statoConfig: Record<string, { label: string; className: string }> = {
   cancelled: { label: 'Cancellata', className: 'bg-red-100 text-red-800' },
 }
 
+// Determina lo stato visivo basandosi su stato prenotazione + acconto pagato
+function getStatoVisivo(pren: Prenotazione): { label: string; className: string } {
+  // Se cancellata o completata, mostra sempre quello stato
+  if (pren.stato === 'cancelled') {
+    return statoConfig.cancelled
+  }
+  if (pren.stato === 'completed') {
+    return statoConfig.completed
+  }
+  if (pren.stato === 'checkedin') {
+    return statoConfig.checkedin
+  }
+
+  // Per stati pending/confirmed, controlla se l'acconto è pagato
+  if (!pren.accontoPagato) {
+    return { label: 'In attesa', className: 'bg-yellow-100 text-yellow-800' }
+  }
+
+  // Acconto pagato = confermata
+  return { label: 'Confermata', className: 'bg-green-100 text-green-800' }
+}
+
 const fonteConfig: Record<string, { label: string; className: string }> = {
   direct: { label: 'Diretto', className: 'bg-purple-100 text-purple-700' },
   airbnb: { label: 'Airbnb', className: 'bg-rose-100 text-rose-700' },
@@ -337,8 +359,8 @@ export default function PrenotazioniPage() {
 
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                   <div className="flex items-center gap-2">
-                    <span className={cn('text-xs px-2 py-1 rounded-full font-medium', statoConfig[pren.stato]?.className || 'bg-gray-100 text-gray-800')}>
-                      {statoConfig[pren.stato]?.label || pren.stato}
+                    <span className={cn('text-xs px-2 py-1 rounded-full font-medium', getStatoVisivo(pren).className)}>
+                      {getStatoVisivo(pren).label}
                     </span>
                     <span className={cn('text-xs px-2 py-1 rounded-full font-medium', fonteConfig[pren.fonte]?.className || 'bg-gray-100 text-gray-700')}>
                       {fonteConfig[pren.fonte]?.label || pren.fonte}
@@ -454,8 +476,8 @@ export default function PrenotazioniPage() {
                       </td>
                       <td className="p-4">
                         <div className="space-y-1">
-                          <span className={cn('inline-flex text-xs px-2 py-1 rounded-full font-medium', statoConfig[pren.stato]?.className || 'bg-gray-100 text-gray-800')}>
-                            {statoConfig[pren.stato]?.label || pren.stato}
+                          <span className={cn('inline-flex text-xs px-2 py-1 rounded-full font-medium', getStatoVisivo(pren).className)}>
+                            {getStatoVisivo(pren).label}
                           </span>
                           <span className={cn('inline-flex text-xs px-2 py-1 rounded-full font-medium', fonteConfig[pren.fonte]?.className || 'bg-gray-100 text-gray-700')}>
                             {fonteConfig[pren.fonte]?.label || pren.fonte}
@@ -530,8 +552,8 @@ export default function PrenotazioniPage() {
                     {selectedPrenotazione.appartamento.nome}
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className={cn('text-xs px-2 py-1 rounded-full font-medium', statoConfig[selectedPrenotazione.stato]?.className)}>
-                      {statoConfig[selectedPrenotazione.stato]?.label}
+                    <span className={cn('text-xs px-2 py-1 rounded-full font-medium', getStatoVisivo(selectedPrenotazione).className)}>
+                      {getStatoVisivo(selectedPrenotazione).label}
                     </span>
                     <span className={cn('text-xs px-2 py-1 rounded-full font-medium', fonteConfig[selectedPrenotazione.fonte]?.className)}>
                       {fonteConfig[selectedPrenotazione.fonte]?.label}
