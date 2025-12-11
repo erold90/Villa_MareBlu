@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
-import { ChevronLeft, ChevronRight, Plus, Filter, Loader2, X, Phone, Mail, MapPin, Calendar, Users, CreditCard, Dog, Bed, Edit } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Filter, Loader2, X, Phone, Mail, MapPin, Calendar, Users, CreditCard, Dog, Bed, Edit, LogIn, LogOut } from 'lucide-react'
 import { cn, getMonthName, getDayName, isToday, formatPrice, formatDate } from '@/lib/utils'
 import { appartamentiConfig } from '@/config/appartamenti'
 
@@ -353,6 +353,12 @@ export default function CalendarioPage() {
                           const date = new Date(year, month, day)
                           const isWeekend = date.getDay() === 0 || date.getDay() === 6
                           const prenotazioniGiorno = getPrenotazioniForDay(day, app.id)
+
+                          // Verifica se c'è un check-out in questo giorno (per aggiungere separatore visivo)
+                          const hasCheckOut = prenotazioniGiorno.some(p => isCheckOut(day, p))
+                          const hasCheckIn = prenotazioniGiorno.some(p => isCheckIn(day, p))
+                          const hasTransition = hasCheckOut && hasCheckIn && prenotazioniGiorno.length >= 1
+
                           return (
                             <div
                               key={day}
@@ -362,23 +368,44 @@ export default function CalendarioPage() {
                                 isToday(date) && 'bg-blue-50/50 dark:bg-blue-900/20'
                               )}
                             >
-                              {prenotazioniGiorno.map((pren) => (
-                                <div
-                                  key={pren.id}
-                                  onClick={() => handlePrenotazioneClick(pren)}
-                                  className={cn(
-                                    'absolute top-2 bottom-2 flex items-center justify-center text-white text-xs font-medium cursor-pointer hover:opacity-80 hover:scale-[1.02] transition-all',
-                                    getStatoColore(pren),
-                                    isCheckIn(day, pren) ? 'left-0 rounded-l-lg' : 'left-0',
-                                    isCheckOut(day, pren) ? 'right-0 rounded-r-lg' : 'right-0'
-                                  )}
-                                  title={`${pren.ospite} - ${pren.numOspiti} ospiti`}
-                                >
-                                  {isCheckIn(day, pren) && (
-                                    <span className="px-2 truncate">{truncateCognome(pren.ospiteCognome)}</span>
-                                  )}
-                                </div>
-                              ))}
+                              {prenotazioniGiorno.map((pren) => {
+                                const isStart = isCheckIn(day, pren)
+                                const isEnd = isCheckOut(day, pren)
+
+                                return (
+                                  <div
+                                    key={pren.id}
+                                    onClick={() => handlePrenotazioneClick(pren)}
+                                    className={cn(
+                                      'absolute top-2 bottom-2 flex items-center text-white text-xs font-medium cursor-pointer hover:opacity-90 hover:scale-[1.02] transition-all shadow-sm',
+                                      getStatoColore(pren),
+                                      // Bordi arrotondati per creare effetto "pillola"
+                                      isStart && 'rounded-l-full ml-1',
+                                      isEnd && 'rounded-r-full mr-1',
+                                      // Posizionamento con gap
+                                      isStart ? 'left-0' : '-left-px',
+                                      isEnd ? 'right-0' : '-right-px',
+                                      // Aggiunge bordo sottile per separazione visiva
+                                      'border-r border-white/30'
+                                    )}
+                                    title={`${pren.ospite} - ${pren.numOspiti} ospiti`}
+                                  >
+                                    {/* Icona check-in */}
+                                    {isStart && (
+                                      <span className="flex items-center gap-1 pl-2 pr-1">
+                                        <LogIn className="w-3 h-3 flex-shrink-0" />
+                                        <span className="truncate">{truncateCognome(pren.ospiteCognome)}</span>
+                                      </span>
+                                    )}
+                                    {/* Icona check-out (solo se non è anche check-in) */}
+                                    {isEnd && !isStart && (
+                                      <span className="flex items-center justify-end w-full pr-2">
+                                        <LogOut className="w-3 h-3 flex-shrink-0" />
+                                      </span>
+                                    )}
+                                  </div>
+                                )
+                              })}
                             </div>
                           )
                         })}
@@ -467,7 +494,7 @@ export default function CalendarioPage() {
         {/* Legend */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
           <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Legenda</h4>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 mb-4">
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-yellow-400" />
               <span className="text-sm text-gray-600 dark:text-gray-300">In attesa</span>
@@ -478,7 +505,7 @@ export default function CalendarioPage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-blue-500" />
-              <span className="text-sm text-gray-600 dark:text-gray-300">Check-in</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Check-in effettuato</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-gray-400" />
@@ -487,6 +514,20 @@ export default function CalendarioPage() {
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-red-400" />
               <span className="text-sm text-gray-600 dark:text-gray-300">Cancellata</span>
+            </div>
+          </div>
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-3 flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <LogIn className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-sm text-gray-600 dark:text-gray-300">Arrivo ospite</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <LogOut className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-sm text-gray-600 dark:text-gray-300">Partenza ospite</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-4 rounded-full bg-gray-300 dark:bg-gray-600" />
+              <span className="text-sm text-gray-600 dark:text-gray-300">Bordi arrotondati = inizio/fine prenotazione</span>
             </div>
           </div>
         </div>
