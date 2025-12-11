@@ -5,6 +5,18 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('📊 Inserimento prenotazioni reali Estate 2025...')
 
+  // Prima elimina le prenotazioni di test del 2025
+  console.log('🗑️  Eliminazione prenotazioni di test 2025...')
+  const deleted = await prisma.prenotazione.deleteMany({
+    where: {
+      checkIn: {
+        gte: new Date('2025-01-01'),
+        lt: new Date('2026-01-01')
+      }
+    }
+  })
+  console.log(`✓ Eliminate ${deleted.count} prenotazioni di test`)
+
   // Crea gli ospiti reali
   const ospiti = await Promise.all([
     prisma.ospite.create({

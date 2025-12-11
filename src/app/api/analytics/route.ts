@@ -115,6 +115,9 @@ export async function GET(request: NextRequest) {
     const annoRichiesto = searchParams.get('anno')
       ? parseInt(searchParams.get('anno')!)
       : new Date().getFullYear()
+    const annoConfronto = searchParams.get('confronto')
+      ? parseInt(searchParams.get('confronto')!)
+      : null
 
     // Trova tutte le stagioni disponibili
     const annoCorrente = new Date().getFullYear()
@@ -133,15 +136,15 @@ export async function GET(request: NextRequest) {
       stagionePrincipale = await getStoricoSalvato(annoRichiesto)
     }
 
-    // Ottieni dati delle stagioni precedenti per confronto
+    // Ottieni dati della stagione di confronto (se specificata)
     const stagioniConfronto: any[] = []
-    for (let anno = annoRichiesto - 1; anno >= primaSttagione && stagioniConfronto.length < 3; anno--) {
-      let datiStagione: any = await calcolaDatiStagione(anno)
-      if (!datiStagione) {
-        datiStagione = await getStoricoSalvato(anno)
+    if (annoConfronto && annoConfronto !== annoRichiesto) {
+      let datiConfronto: any = await calcolaDatiStagione(annoConfronto)
+      if (!datiConfronto) {
+        datiConfronto = await getStoricoSalvato(annoConfronto)
       }
-      if (datiStagione) {
-        stagioniConfronto.push(datiStagione)
+      if (datiConfronto) {
+        stagioniConfronto.push(datiConfronto)
       }
     }
 

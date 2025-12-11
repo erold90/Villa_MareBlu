@@ -65,6 +65,8 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [annoSelezionato, setAnnoSelezionato] = useState<number>(new Date().getFullYear())
+  const [annoConfronto, setAnnoConfronto] = useState<number | null>(null)
+  const [confrontoAttivo, setConfrontoAttivo] = useState(true)
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
@@ -75,10 +77,21 @@ export default function AnalyticsPage() {
     async function fetchAnalytics() {
       setLoading(true)
       try {
-        const response = await fetch(`/api/analytics?anno=${annoSelezionato}`)
+        const url = annoConfronto && confrontoAttivo
+          ? `/api/analytics?anno=${annoSelezionato}&confronto=${annoConfronto}`
+          : `/api/analytics?anno=${annoSelezionato}`
+        const response = await fetch(url)
         if (!response.ok) throw new Error('Errore nel caricamento')
         const analyticsData = await response.json()
         setData(analyticsData)
+
+        // Imposta anno confronto default se non settato
+        if (annoConfronto === null && analyticsData.stagioniDisponibili.length > 1) {
+          const anniDisponibili = analyticsData.stagioniDisponibili.filter((a: number) => a !== annoSelezionato)
+          if (anniDisponibili.length > 0) {
+            setAnnoConfronto(anniDisponibili[0])
+          }
+        }
       } catch (err) {
         setError('Errore nel caricamento dei dati analytics')
         console.error(err)
@@ -88,7 +101,7 @@ export default function AnalyticsPage() {
     }
 
     fetchAnalytics()
-  }, [annoSelezionato])
+  }, [annoSelezionato, annoConfronto, confrontoAttivo])
 
   if (loading) {
     return (
@@ -150,9 +163,10 @@ export default function AnalyticsPage() {
       <Header title="Analytics" subtitle={`Stagione ${annoSelezionato}`} />
 
       <div className="p-4 lg:p-6 space-y-6">
-        {/* Selettore Stagione */}
+        {/* Selettore Stagione e Confronto */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-wrap">
+            {/* Stagione principale */}
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               <span className="font-medium text-gray-700 dark:text-gray-300">Stagione:</span>
@@ -169,11 +183,39 @@ export default function AnalyticsPage() {
               </select>
             </div>
 
-            {stagioniConfronto.length > 0 && (
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Confronto con: {stagioniConfronto.map(s => s.anno).join(', ')}
-              </div>
-            )}
+            {/* Separatore */}
+            <div className="hidden sm:block w-px h-8 bg-gray-200 dark:bg-gray-700" />
+
+            {/* Confronto */}
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={confrontoAttivo}
+                  onChange={(e) => setConfrontoAttivo(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300 dark:border-gray-600"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400">Confronta con:</span>
+              </label>
+              <select
+                value={annoConfronto || ''}
+                onChange={(e) => setAnnoConfronto(e.target.value ? parseInt(e.target.value) : null)}
+                disabled={!confrontoAttivo}
+                className={cn(
+                  "px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white",
+                  !confrontoAttivo && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <option value="">Nessuno</option>
+                {stagioniDisponibili
+                  .filter(anno => anno !== annoSelezionato)
+                  .map(anno => (
+                    <option key={anno} value={anno}>
+                      {anno}
+                    </option>
+                  ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -201,7 +243,7 @@ export default function AnalyticsPage() {
                   <div className="p-2 lg:p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
                     <Euro className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
                   </div>
-                  {variazioneRicavi !== null && (
+                  {confrontoAttivo && variazioneRicavi !== null && (
                     <span className={cn(
                       'flex items-center gap-1 text-xs lg:text-sm font-medium',
                       variazioneRicavi >= 0 ? 'text-green-600' : 'text-red-600'
@@ -223,7 +265,7 @@ export default function AnalyticsPage() {
                   <div className="p-2 lg:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                     <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
                   </div>
-                  {variazionePrenotazioni !== null && (
+                  {confrontoAttivo && variazionePrenotazioni !== null && (
                     <span className={cn(
                       'flex items-center gap-1 text-xs lg:text-sm font-medium',
                       variazionePrenotazioni >= 0 ? 'text-green-600' : 'text-red-600'
@@ -269,7 +311,7 @@ export default function AnalyticsPage() {
             {/* Grafico Confronto Mensile */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-                Ricavi per Mese - Confronto Stagioni
+                Ricavi per Mese {confrontoAttivo && stagioniConfronto.length > 0 ? '- Confronto Stagioni' : ''}
               </h3>
               <div className="h-80" style={{ minWidth: 0, minHeight: 320 }}>
                 {isClient && confrontoMensile.length > 0 && (
@@ -284,7 +326,7 @@ export default function AnalyticsPage() {
                       />
                       <Legend />
                       <Bar dataKey={`${annoSelezionato}`} fill={COLORI_ANNI[0]} name={`${annoSelezionato}`} radius={[4, 4, 0, 0]} />
-                      {stagioniConfronto.map((stagione, index) => (
+                      {confrontoAttivo && stagioniConfronto.map((stagione, index) => (
                         <Bar
                           key={stagione.anno}
                           dataKey={`${stagione.anno}`}
@@ -383,7 +425,7 @@ export default function AnalyticsPage() {
                       />
                       <Legend />
                       <Bar dataKey={`${annoSelezionato}`} fill={COLORI_ANNI[0]} name={`${annoSelezionato}`} radius={[0, 4, 4, 0]} />
-                      {stagioniConfronto[0] && (
+                      {confrontoAttivo && stagioniConfronto[0] && (
                         <Bar dataKey={`${stagioniConfronto[0].anno}`} fill={COLORI_ANNI[1]} name={`${stagioniConfronto[0].anno}`} radius={[0, 4, 4, 0]} />
                       )}
                     </BarChart>
@@ -405,7 +447,7 @@ export default function AnalyticsPage() {
                       <th className="text-right p-4 text-sm font-semibold text-gray-900 dark:text-white">Ricavi</th>
                       <th className="text-right p-4 text-sm font-semibold text-gray-900 dark:text-white">Prenotazioni</th>
                       <th className="text-right p-4 text-sm font-semibold text-gray-900 dark:text-white">Media</th>
-                      {stagioniConfronto[0] && (
+                      {confrontoAttivo && stagioniConfronto[0] && (
                         <th className="text-right p-4 text-sm font-semibold text-gray-900 dark:text-white">vs {stagioniConfronto[0].anno}</th>
                       )}
                     </tr>
@@ -424,7 +466,7 @@ export default function AnalyticsPage() {
                           <td className="p-4 text-right text-gray-700 dark:text-gray-300">{formatPrice(dati?.ricavi || 0)}</td>
                           <td className="p-4 text-right text-gray-700 dark:text-gray-300">{dati?.prenotazioni || 0}</td>
                           <td className="p-4 text-right text-gray-700 dark:text-gray-300">{formatPrice(dati?.ricavoMedio || 0)}</td>
-                          {stagioniConfronto[0] && (
+                          {confrontoAttivo && stagioniConfronto[0] && (
                             <td className="p-4 text-right">
                               {variazione !== null ? (
                                 <span className={cn(
