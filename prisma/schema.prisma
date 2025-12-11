@@ -3,13 +3,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  // Per sviluppo locale usa SQLite, per produzione (Vercel) usa PostgreSQL
-  // Cambia il provider quando passi in produzione
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 // Appartamenti
