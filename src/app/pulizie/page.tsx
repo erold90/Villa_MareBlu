@@ -270,6 +270,238 @@ export default function PuliziePage() {
     } : { r: 107, g: 114, b: 128 }
   }
 
+  // Genera PDF riepilogo intera stagione
+  const generaPDFStagione = useCallback(() => {
+    if (!data) return
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    })
+
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+    const margin = 15
+    let y = 20
+
+    // Funzione per aggiungere nuova pagina se necessario
+    const checkNewPage = (requiredSpace: number) => {
+      if (y + requiredSpace > pageHeight - 20) {
+        doc.addPage()
+        y = 20
+        return true
+      }
+      return false
+    }
+
+    // === PAGINA 1: COPERTINA E STATISTICHE ===
+
+    // Header
+    doc.setFontSize(24)
+    doc.setFont('helvetica', 'bold')
+    doc.text('PULIZIE', pageWidth / 2, y, { align: 'center' })
+    y += 8
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Villa MareBlu', pageWidth / 2, y, { align: 'center' })
+
+    y += 12
+    doc.setFontSize(18)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(59, 130, 246) // blu
+    doc.text(`STAGIONE ${data.anno}`, pageWidth / 2, y, { align: 'center' })
+    doc.setTextColor(0, 0, 0)
+
+    // Box statistiche
+    y += 20
+    doc.setFillColor(245, 247, 250)
+    doc.roundedRect(margin, y, pageWidth - margin * 2, 35, 4, 4, 'F')
+
+    y += 12
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(100, 100, 100)
+    doc.text('Riepilogo Stagione', margin + 5, y)
+
+    y += 10
+    doc.setFontSize(12)
+    doc.setTextColor(0, 0, 0)
+    doc.setFont('helvetica', 'bold')
+
+    const col1 = margin + 10
+    const col2 = pageWidth / 3 + 5
+    const col3 = (pageWidth / 3) * 2
+
+    doc.text(`${data.stats.totaleGiornate}`, col1, y)
+    doc.text(`${data.stats.giornateDaFare}`, col2, y)
+    doc.text(`${data.stats.giornateFatte}`, col3, y)
+
+    y += 6
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(100, 100, 100)
+    doc.text('Giornate totali', col1, y)
+    doc.text('Da fare', col2, y)
+    doc.text('Completate', col3, y)
+
+    // Alert settimane con più visite
+    if (data.stats.settimaneConPiuVisite > 0) {
+      y += 20
+      doc.setFillColor(254, 243, 199) // amber-100
+      doc.roundedRect(margin, y - 5, pageWidth - margin * 2, 12, 2, 2, 'F')
+      doc.setFontSize(10)
+      doc.setTextColor(146, 64, 14) // amber-800
+      doc.text(
+        `⚠ ${Math.round(data.stats.settimaneConPiuVisite)} settimana/e richiedono più di una visita`,
+        margin + 5,
+        y + 2
+      )
+    }
+
+    // Legenda
+    y += 25
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Legenda tipi di pulizia:', margin, y)
+
+    y += 8
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(80, 80, 80)
+
+    const legendItems = [
+      { label: 'Cambio ospiti', desc: 'Check-out e check-in stesso giorno (obbligatoria)' },
+      { label: 'Fine soggiorno', desc: 'Check-out senza check-in imminente (flessibile)' },
+      { label: 'Pre check-in', desc: 'Appartamento fermo da 6+ notti' },
+      { label: 'Apertura', desc: 'Preparazione inizio stagione' },
+      { label: 'Chiusura', desc: 'Ultimo check-out della stagione' },
+    ]
+
+    legendItems.forEach(item => {
+      doc.setFont('helvetica', 'bold')
+      doc.text(`• ${item.label}:`, margin + 5, y)
+      doc.setFont('helvetica', 'normal')
+      doc.text(item.desc, margin + 40, y)
+      y += 6
+    })
+
+    // === PAGINA 2+: CALENDARIO PULIZIE ===
+    doc.addPage()
+    y = 20
+
+    doc.setFontSize(14)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(0, 0, 0)
+    doc.text(`Calendario Pulizie - Estate ${data.anno}`, pageWidth / 2, y, { align: 'center' })
+    y += 15
+
+    // Raggruppa per mese
+    const giornatePerMese = new Map<string, GiornataPulizie[]>()
+    data.giornatePulizie.forEach(g => {
+      const d = new Date(g.data)
+      const mese = d.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
+      if (!giornatePerMese.has(mese)) {
+        giornatePerMese.set(mese, [])
+      }
+      giornatePerMese.get(mese)!.push(g)
+    })
+
+    // Stampa ogni mese
+    Array.from(giornatePerMese.entries()).forEach(([mese, giornate]) => {
+      checkNewPage(20)
+
+      // Header mese
+      doc.setFillColor(59, 130, 246)
+      doc.roundedRect(margin, y - 4, pageWidth - margin * 2, 10, 2, 2, 'F')
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 255, 255)
+      doc.text(mese.toUpperCase(), margin + 5, y + 2)
+      doc.setTextColor(0, 0, 0)
+      y += 12
+
+      // Giornate del mese
+      giornate.forEach(giornata => {
+        const altezzaRiga = 8 + giornata.pulizie.length * 5
+        checkNewPage(altezzaRiga + 5)
+
+        const dataGiornata = new Date(giornata.data)
+        const giornoNum = dataGiornata.getDate()
+        const giornoNome = giornata.giorno.slice(0, 3)
+
+        // Box giornata
+        doc.setFillColor(250, 250, 250)
+        doc.roundedRect(margin, y - 3, pageWidth - margin * 2, altezzaRiga, 2, 2, 'F')
+
+        // Data
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${giornoNome} ${giornoNum}`, margin + 3, y + 2)
+
+        // Badge se più visite
+        if (giornata.piuVisite) {
+          doc.setFontSize(7)
+          doc.setTextColor(180, 83, 9)
+          doc.text('PIÙ VISITE', margin + 25, y + 2)
+          doc.setTextColor(0, 0, 0)
+        }
+
+        // Lista appartamenti
+        let yApp = y + 2
+        giornata.pulizie.forEach((p, idx) => {
+          const colore = coloriAppartamenti[p.appartamentoId] || '#6B7280'
+          const rgb = hexToRgb(colore)
+
+          // Quadratino colorato
+          doc.setFillColor(rgb.r, rgb.g, rgb.b)
+          doc.roundedRect(margin + 45 + idx * 28, yApp - 4, 6, 6, 1, 1, 'F')
+
+          // Numero app
+          doc.setFontSize(8)
+          doc.setFont('helvetica', 'normal')
+          doc.setTextColor(60, 60, 60)
+          doc.text(`App ${p.appartamentoId}`, margin + 53 + idx * 28, yApp)
+        })
+
+        // Tipo (abbreviato)
+        doc.setFontSize(8)
+        doc.setTextColor(120, 120, 120)
+        const tipiUnici = [...new Set(giornata.pulizie.map(p => tipoLabels[p.tipo] || p.tipo))]
+        doc.text(tipiUnici.join(', '), pageWidth - margin - 5, y + 2, { align: 'right' })
+
+        doc.setTextColor(0, 0, 0)
+        y += altezzaRiga + 3
+      })
+
+      y += 5
+    })
+
+    // Footer su ogni pagina
+    const totalPages = doc.getNumberOfPages()
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i)
+      doc.setFontSize(8)
+      doc.setTextColor(150, 150, 150)
+      doc.text(
+        `Pagina ${i} di ${totalPages}`,
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: 'center' }
+      )
+      doc.text(
+        `Generato il ${new Date().toLocaleDateString('it-IT')}`,
+        pageWidth - margin,
+        pageHeight - 10,
+        { align: 'right' }
+      )
+    }
+
+    // Salva
+    doc.save(`pulizie_stagione_${data.anno}.pdf`)
+  }, [data])
+
   if (loading) {
     return (
       <>
@@ -344,6 +576,16 @@ export default function PuliziePage() {
                 ))}
               </select>
             </div>
+
+            {/* Bottone PDF Stagione */}
+            <button
+              onClick={generaPDFStagione}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">PDF Stagione</span>
+              <span className="sm:hidden">PDF</span>
+            </button>
           </div>
 
           {/* Filtri */}
