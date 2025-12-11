@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { appartamentiConfig } from '@/config/appartamenti'
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,10 +49,29 @@ export async function GET(request: NextRequest) {
       id: p.id,
       appartamentoId: p.appartamentoId,
       ospite: `${p.ospite.cognome} ${p.ospite.nome}`,
+      ospiteCognome: p.ospite.cognome,
+      ospiteNome: p.ospite.nome,
+      ospiteEmail: p.ospite.email,
+      ospiteTelefono: p.ospite.telefono,
+      ospiteNazione: p.ospite.nazione,
       checkIn: p.checkIn.toISOString(),
       checkOut: p.checkOut.toISOString(),
       stato: p.stato,
+      numAdulti: p.numAdulti,
+      numBambini: p.numBambini,
       numOspiti: p.numAdulti + p.numBambini,
+      animali: p.animali,
+      animaliDettaglio: p.animaliDettaglio,
+      biancheria: p.biancheria,
+      biancheriaCosto: p.biancheriaCosto,
+      totale: p.totale,
+      acconto: p.acconto,
+      saldo: p.saldo,
+      accontoPagato: p.accontoPagato,
+      saldoPagato: p.saldoPagato,
+      fonte: p.fonte,
+      appartamentoNome: p.appartamento.nome,
+      appartamentoColore: appartamentiConfig.find(a => a.id === p.appartamentoId)?.colore || '#3B82F6',
     }))
 
     return NextResponse.json(prenotazioniFormattate)

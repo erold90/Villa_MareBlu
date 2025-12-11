@@ -1,19 +1,39 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
-import { ChevronLeft, ChevronRight, Plus, Filter, Loader2 } from 'lucide-react'
-import { cn, getMonthName, getDayName, isToday } from '@/lib/utils'
+import { ChevronLeft, ChevronRight, Plus, Filter, Loader2, X, Phone, Mail, MapPin, Calendar, Users, CreditCard, Dog, Bed, Edit } from 'lucide-react'
+import { cn, getMonthName, getDayName, isToday, formatPrice, formatDate } from '@/lib/utils'
 import { appartamentiConfig } from '@/config/appartamenti'
 
 interface Prenotazione {
   id: number
   appartamentoId: number
   ospite: string
+  ospiteCognome: string
+  ospiteNome: string
+  ospiteEmail: string | null
+  ospiteTelefono: string | null
+  ospiteNazione: string | null
   checkIn: string
   checkOut: string
   stato: string
+  numAdulti: number
+  numBambini: number
   numOspiti: number
+  animali: boolean
+  animaliDettaglio: string | null
+  biancheria: boolean
+  biancheriaCosto: number
+  totale: number
+  acconto: number
+  saldo: number
+  accontoPagato: boolean
+  saldoPagato: boolean
+  fonte: string
+  appartamentoNome: string
+  appartamentoColore: string | null
 }
 
 const statoColors: Record<string, string> = {
@@ -22,6 +42,27 @@ const statoColors: Record<string, string> = {
   checkedin: 'bg-blue-500',
   completed: 'bg-gray-400',
   cancelled: 'bg-red-400',
+}
+
+const statoConfig: Record<string, { label: string; className: string }> = {
+  pending: { label: 'In attesa', className: 'bg-yellow-100 text-yellow-800' },
+  confirmed: { label: 'Confermata', className: 'bg-green-100 text-green-800' },
+  checkedin: { label: 'Check-in', className: 'bg-blue-100 text-blue-800' },
+  completed: { label: 'Completata', className: 'bg-gray-100 text-gray-800' },
+  cancelled: { label: 'Cancellata', className: 'bg-red-100 text-red-800' },
+}
+
+const fonteConfig: Record<string, { label: string; className: string }> = {
+  direct: { label: 'Diretto', className: 'bg-purple-100 text-purple-700' },
+  airbnb: { label: 'Airbnb', className: 'bg-rose-100 text-rose-700' },
+  booking: { label: 'Booking', className: 'bg-blue-100 text-blue-700' },
+  altro: { label: 'Altro', className: 'bg-gray-100 text-gray-700' },
+}
+
+// Tronca il cognome se troppo lungo
+function truncateCognome(cognome: string, maxLength: number = 8): string {
+  if (cognome.length <= maxLength) return cognome
+  return cognome.substring(0, maxLength - 1) + '…'
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -34,6 +75,7 @@ function getFirstDayOfMonth(year: number, month: number) {
 }
 
 export default function CalendarioPage() {
+  const router = useRouter()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<'month' | 'timeline'>('timeline')
   const [selectedAppartamenti, setSelectedAppartamenti] = useState<number[]>(
@@ -41,6 +83,21 @@ export default function CalendarioPage() {
   )
   const [prenotazioni, setPrenotazioni] = useState<Prenotazione[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Modal state
+  const [selectedPrenotazione, setSelectedPrenotazione] = useState<Prenotazione | null>(null)
+  const [showModal, setShowModal] = useState(false)
+
+  // Funzione per aprire il modal con i dettagli
+  const handlePrenotazioneClick = (pren: Prenotazione) => {
+    setSelectedPrenotazione(pren)
+    setShowModal(true)
+  }
+
+  // Funzione per andare alla modifica
+  const handleEdit = (pren: Prenotazione) => {
+    router.push(`/prenotazioni/${pren.id}/modifica`)
+  }
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -282,8 +339,9 @@ export default function CalendarioPage() {
                               {prenotazioniGiorno.map((pren) => (
                                 <div
                                   key={pren.id}
+                                  onClick={() => handlePrenotazioneClick(pren)}
                                   className={cn(
-                                    'absolute top-2 bottom-2 flex items-center justify-center text-white text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity',
+                                    'absolute top-2 bottom-2 flex items-center justify-center text-white text-xs font-medium cursor-pointer hover:opacity-80 hover:scale-[1.02] transition-all',
                                     statoColors[pren.stato] || 'bg-green-500',
                                     isCheckIn(day, pren) ? 'left-0 rounded-l-lg' : 'left-0',
                                     isCheckOut(day, pren) ? 'right-0 rounded-r-lg' : 'right-0'
@@ -291,7 +349,7 @@ export default function CalendarioPage() {
                                   title={`${pren.ospite} - ${pren.numOspiti} ospiti`}
                                 >
                                   {isCheckIn(day, pren) && (
-                                    <span className="px-2 truncate">{pren.ospite.split(' ')[0]}</span>
+                                    <span className="px-2 truncate">{truncateCognome(pren.ospiteCognome)}</span>
                                   )}
                                 </div>
                               ))}
@@ -358,12 +416,13 @@ export default function CalendarioPage() {
                       {allPrenotazioni.slice(0, 3).map((pren) => (
                         <div
                           key={pren.id}
-                          className="text-xs px-2 py-1 rounded text-white truncate cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => handlePrenotazioneClick(pren)}
+                          className="text-xs px-2 py-1 rounded text-white truncate cursor-pointer hover:opacity-80 hover:scale-[1.02] transition-all"
                           style={{ backgroundColor: pren.colore }}
                         >
-                          {isCheckIn(day, pren) && '> '}
-                          {pren.ospite.split(' ')[0]}
-                          {isCheckOut(day, pren) && ' <'}
+                          {isCheckIn(day, pren) && '→ '}
+                          {truncateCognome(pren.ospiteCognome)}
+                          {isCheckOut(day, pren) && ' ←'}
                         </div>
                       ))}
                       {allPrenotazioni.length > 3 && (
@@ -406,6 +465,197 @@ export default function CalendarioPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal Dettaglio Prenotazione */}
+      {showModal && selectedPrenotazione && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Modal */}
+            <div className="sticky top-0 bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Dettaglio Prenotazione</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Contenuto Modal */}
+            <div className="p-6 space-y-5">
+              {/* Appartamento */}
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold"
+                  style={{ backgroundColor: selectedPrenotazione.appartamentoColore || '#3B82F6' }}
+                >
+                  {selectedPrenotazione.appartamentoId}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {selectedPrenotazione.appartamentoNome}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className={cn('text-xs px-2 py-1 rounded-full font-medium', statoConfig[selectedPrenotazione.stato]?.className)}>
+                      {statoConfig[selectedPrenotazione.stato]?.label}
+                    </span>
+                    <span className={cn('text-xs px-2 py-1 rounded-full font-medium', fonteConfig[selectedPrenotazione.fonte]?.className)}>
+                      {fonteConfig[selectedPrenotazione.fonte]?.label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ospite */}
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Ospite
+                </h4>
+                <p className="text-lg font-medium text-gray-900 dark:text-white">
+                  {selectedPrenotazione.ospiteCognome} {selectedPrenotazione.ospiteNome}
+                </p>
+                {selectedPrenotazione.ospiteEmail && (
+                  <p className="text-gray-600 dark:text-gray-300 flex items-center gap-2 mt-1">
+                    <Mail className="w-4 h-4" />
+                    <a href={`mailto:${selectedPrenotazione.ospiteEmail}`} className="hover:underline">
+                      {selectedPrenotazione.ospiteEmail}
+                    </a>
+                  </p>
+                )}
+                {selectedPrenotazione.ospiteTelefono && (
+                  <p className="text-gray-600 dark:text-gray-300 flex items-center gap-2 mt-1">
+                    <Phone className="w-4 h-4" />
+                    <a href={`tel:${selectedPrenotazione.ospiteTelefono}`} className="hover:underline">
+                      {selectedPrenotazione.ospiteTelefono}
+                    </a>
+                  </p>
+                )}
+                {selectedPrenotazione.ospiteNazione && (
+                  <p className="text-gray-600 dark:text-gray-300 flex items-center gap-2 mt-1">
+                    <MapPin className="w-4 h-4" />
+                    {selectedPrenotazione.ospiteNazione}
+                  </p>
+                )}
+              </div>
+
+              {/* Date */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-4">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-1 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Check-in
+                  </h4>
+                  <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                    {formatDate(selectedPrenotazione.checkIn)}
+                  </p>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-900/30 rounded-xl p-4">
+                  <h4 className="font-semibold text-amber-900 dark:text-amber-200 mb-1 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Check-out
+                  </h4>
+                  <p className="text-lg font-bold text-amber-700 dark:text-amber-300">
+                    {formatDate(selectedPrenotazione.checkOut)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Composizione */}
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Ospiti</h4>
+                <div className="flex flex-wrap gap-4">
+                  <div>
+                    <span className="text-gray-500 dark:text-gray-400">Adulti:</span>
+                    <span className="ml-2 font-semibold text-gray-900 dark:text-white">{selectedPrenotazione.numAdulti}</span>
+                  </div>
+                  {selectedPrenotazione.numBambini > 0 && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Bambini:</span>
+                      <span className="ml-2 font-semibold text-gray-900 dark:text-white">{selectedPrenotazione.numBambini}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Extra */}
+              {(selectedPrenotazione.animali || selectedPrenotazione.biancheria) && (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Extra</h4>
+                  <div className="flex flex-wrap gap-3">
+                    {selectedPrenotazione.animali && (
+                      <span className="flex items-center gap-2 px-3 py-2 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 rounded-lg">
+                        <Dog className="w-4 h-4" />
+                        Animali{selectedPrenotazione.animaliDettaglio && `: ${selectedPrenotazione.animaliDettaglio}`}
+                      </span>
+                    )}
+                    {selectedPrenotazione.biancheria && (
+                      <span className="flex items-center gap-2 px-3 py-2 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-lg">
+                        <Bed className="w-4 h-4" />
+                        Biancheria ({formatPrice(selectedPrenotazione.biancheriaCosto)})
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Pagamento */}
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-xl p-4">
+                <h4 className="font-semibold text-green-900 dark:text-green-200 mb-3 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" />
+                  Pagamento
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-300">Totale:</span>
+                    <span className="text-xl font-bold text-green-700 dark:text-green-300">{formatPrice(selectedPrenotazione.totale)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-300">Acconto:</span>
+                    <span className={cn('font-semibold', selectedPrenotazione.accontoPagato ? 'text-green-600' : 'text-amber-600')}>
+                      {formatPrice(selectedPrenotazione.acconto)} {selectedPrenotazione.accontoPagato ? '(Pagato)' : '(Da pagare)'}
+                    </span>
+                  </div>
+                  {selectedPrenotazione.saldo > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-300">Saldo:</span>
+                      <span className={cn('font-semibold', selectedPrenotazione.saldoPagato ? 'text-green-600' : 'text-red-600')}>
+                        {formatPrice(selectedPrenotazione.saldo)} {selectedPrenotazione.saldoPagato ? '(Pagato)' : '(Da pagare)'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Modal */}
+            <div className="sticky bottom-0 bg-white dark:bg-gray-800 p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                Chiudi
+              </button>
+              <button
+                onClick={() => {
+                  setShowModal(false)
+                  handleEdit(selectedPrenotazione)
+                }}
+                className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg flex items-center gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                Modifica
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
