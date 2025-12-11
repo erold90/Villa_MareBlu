@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
-import { ChevronLeft, ChevronRight, Plus, Filter, Loader2, X, Phone, Mail, MapPin, Calendar, Users, CreditCard, Dog, Bed, Edit, LogIn, LogOut } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Filter, Loader2, X, Phone, Mail, MapPin, Calendar, Users, CreditCard, Dog, Bed, Edit } from 'lucide-react'
 import { cn, getMonthName, getDayName, isToday, formatPrice, formatDate } from '@/lib/utils'
 import { appartamentiConfig } from '@/config/appartamenti'
 
@@ -354,58 +354,80 @@ export default function CalendarioPage() {
                           const isWeekend = date.getDay() === 0 || date.getDay() === 6
                           const prenotazioniGiorno = getPrenotazioniForDay(day, app.id)
 
-                          // Verifica se c'è un check-out in questo giorno (per aggiungere separatore visivo)
-                          const hasCheckOut = prenotazioniGiorno.some(p => isCheckOut(day, p))
-                          const hasCheckIn = prenotazioniGiorno.some(p => isCheckIn(day, p))
-                          const hasTransition = hasCheckOut && hasCheckIn && prenotazioniGiorno.length >= 1
+                          // Verifica se c'è una transizione (check-out + check-in nello stesso giorno)
+                          const checkOutPren = prenotazioniGiorno.find(p => isCheckOut(day, p))
+                          const checkInPren = prenotazioniGiorno.find(p => isCheckIn(day, p))
+                          const hasTransition = checkOutPren && checkInPren && checkOutPren.id !== checkInPren.id
 
                           return (
                             <div
                               key={day}
                               className={cn(
-                                'flex-1 min-w-[40px] border-r border-gray-100 dark:border-gray-700 last:border-r-0 relative',
+                                'flex-1 min-w-[40px] border-r border-gray-100 dark:border-gray-700 last:border-r-0 relative overflow-hidden',
                                 isWeekend && 'bg-gray-50/50 dark:bg-gray-700/30',
                                 isToday(date) && 'bg-blue-50/50 dark:bg-blue-900/20'
                               )}
                             >
-                              {prenotazioniGiorno.map((pren) => {
-                                const isStart = isCheckIn(day, pren)
-                                const isEnd = isCheckOut(day, pren)
-
-                                return (
+                              {hasTransition ? (
+                                // Giorno di transizione: mostra diagonale
+                                <div
+                                  className="absolute inset-x-0 top-2 bottom-2 cursor-pointer"
+                                  onClick={() => handlePrenotazioneClick(checkInPren)}
+                                  title={`Check-out: ${checkOutPren.ospiteCognome} → Check-in: ${checkInPren.ospiteCognome}`}
+                                >
+                                  {/* Metà superiore sinistra (check-out) */}
                                   <div
-                                    key={pren.id}
-                                    onClick={() => handlePrenotazioneClick(pren)}
                                     className={cn(
-                                      'absolute top-2 bottom-2 flex items-center text-white text-xs font-medium cursor-pointer hover:opacity-90 hover:scale-[1.02] transition-all shadow-sm',
-                                      getStatoColore(pren),
-                                      // Bordi arrotondati per creare effetto "pillola"
-                                      isStart && 'rounded-l-full ml-1',
-                                      isEnd && 'rounded-r-full mr-1',
-                                      // Posizionamento con gap
-                                      isStart ? 'left-0' : '-left-px',
-                                      isEnd ? 'right-0' : '-right-px',
-                                      // Aggiunge bordo sottile per separazione visiva
-                                      'border-r border-white/30'
+                                      'absolute inset-0',
+                                      getStatoColore(checkOutPren)
                                     )}
-                                    title={`${pren.ospite} - ${pren.numOspiti} ospiti`}
-                                  >
-                                    {/* Icona check-in */}
-                                    {isStart && (
-                                      <span className="flex items-center gap-1 pl-2 pr-1">
-                                        <LogIn className="w-3 h-3 flex-shrink-0" />
-                                        <span className="truncate">{truncateCognome(pren.ospiteCognome)}</span>
-                                      </span>
+                                    style={{
+                                      clipPath: 'polygon(0 0, 100% 0, 0 100%)'
+                                    }}
+                                  />
+                                  {/* Metà inferiore destra (check-in) */}
+                                  <div
+                                    className={cn(
+                                      'absolute inset-0',
+                                      getStatoColore(checkInPren)
                                     )}
-                                    {/* Icona check-out (solo se non è anche check-in) */}
-                                    {isEnd && !isStart && (
-                                      <span className="flex items-center justify-end w-full pr-2">
-                                        <LogOut className="w-3 h-3 flex-shrink-0" />
-                                      </span>
-                                    )}
-                                  </div>
-                                )
-                              })}
+                                    style={{
+                                      clipPath: 'polygon(100% 0, 100% 100%, 0 100%)'
+                                    }}
+                                  />
+                                  {/* Linea diagonale di separazione */}
+                                  <div
+                                    className="absolute inset-0 pointer-events-none"
+                                    style={{
+                                      background: 'linear-gradient(to bottom right, transparent calc(50% - 1px), white calc(50% - 1px), white calc(50% + 1px), transparent calc(50% + 1px))'
+                                    }}
+                                  />
+                                </div>
+                              ) : (
+                                // Giorno normale
+                                prenotazioniGiorno.map((pren) => {
+                                  const isStart = isCheckIn(day, pren)
+                                  const isEnd = isCheckOut(day, pren)
+
+                                  return (
+                                    <div
+                                      key={pren.id}
+                                      onClick={() => handlePrenotazioneClick(pren)}
+                                      className={cn(
+                                        'absolute top-2 bottom-2 left-0 right-0 flex items-center justify-center text-white text-xs font-medium cursor-pointer hover:opacity-80 transition-all',
+                                        getStatoColore(pren),
+                                        isStart && 'rounded-l-lg',
+                                        isEnd && 'rounded-r-lg'
+                                      )}
+                                      title={`${pren.ospite} - ${pren.numOspiti} ospiti`}
+                                    >
+                                      {isStart && (
+                                        <span className="px-2 truncate">{truncateCognome(pren.ospiteCognome)}</span>
+                                      )}
+                                    </div>
+                                  )
+                                })
+                              )}
                             </div>
                           )
                         })}
@@ -494,7 +516,7 @@ export default function CalendarioPage() {
         {/* Legend */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
           <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Legenda</h4>
-          <div className="flex flex-wrap gap-4 mb-4">
+          <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-yellow-400" />
               <span className="text-sm text-gray-600 dark:text-gray-300">In attesa</span>
@@ -505,7 +527,7 @@ export default function CalendarioPage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-blue-500" />
-              <span className="text-sm text-gray-600 dark:text-gray-300">Check-in effettuato</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Check-in</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-gray-400" />
@@ -515,19 +537,12 @@ export default function CalendarioPage() {
               <span className="w-4 h-4 rounded bg-red-400" />
               <span className="text-sm text-gray-600 dark:text-gray-300">Cancellata</span>
             </div>
-          </div>
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-3 flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
-              <LogIn className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-300">Arrivo ospite</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <LogOut className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-300">Partenza ospite</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-4 rounded-full bg-gray-300 dark:bg-gray-600" />
-              <span className="text-sm text-gray-600 dark:text-gray-300">Bordi arrotondati = inizio/fine prenotazione</span>
+              <span className="w-5 h-5 relative overflow-hidden rounded">
+                <span className="absolute inset-0 bg-yellow-400" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
+                <span className="absolute inset-0 bg-green-500" style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }} />
+              </span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Cambio ospite</span>
             </div>
           </div>
         </div>
