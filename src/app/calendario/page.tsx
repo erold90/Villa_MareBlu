@@ -1,61 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
 import { ChevronLeft, ChevronRight, Plus, Filter, Loader2, X, Phone, Mail, MapPin, Calendar, Users, CreditCard, Dog, Bed, Edit } from 'lucide-react'
 import { cn, getMonthName, getDayName, isToday, formatPrice, formatDate } from '@/lib/utils'
 import { appartamentiConfig } from '@/config/appartamenti'
-
-// Hook personalizzato per gestire lo swipe
-function useSwipe(onSwipeLeft: () => void, onSwipeRight: () => void, threshold: number = 50) {
-  const touchStartX = useRef<number | null>(null)
-  const touchEndX = useRef<number | null>(null)
-  const [swipeOffset, setSwipeOffset] = useState(0)
-  const [isSwiping, setIsSwiping] = useState(false)
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-    touchEndX.current = null
-    setIsSwiping(true)
-  }, [])
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartX.current === null) return
-    touchEndX.current = e.touches[0].clientX
-    const diff = touchEndX.current - touchStartX.current
-    // Limita l'offset per un effetto elastico
-    setSwipeOffset(diff * 0.3)
-  }, [])
-
-  const handleTouchEnd = useCallback(() => {
-    setIsSwiping(false)
-    setSwipeOffset(0)
-
-    if (touchStartX.current === null || touchEndX.current === null) return
-
-    const diff = touchEndX.current - touchStartX.current
-
-    if (Math.abs(diff) > threshold) {
-      if (diff > 0) {
-        onSwipeRight() // Swipe verso destra = mese precedente
-      } else {
-        onSwipeLeft() // Swipe verso sinistra = mese successivo
-      }
-    }
-
-    touchStartX.current = null
-    touchEndX.current = null
-  }, [onSwipeLeft, onSwipeRight, threshold])
-
-  return {
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
-    swipeOffset,
-    isSwiping
-  }
-}
 
 interface Prenotazione {
   id: number
@@ -138,10 +88,6 @@ export default function CalendarioPage() {
   const [selectedPrenotazione, setSelectedPrenotazione] = useState<Prenotazione | null>(null)
   const [showModal, setShowModal] = useState(false)
 
-  // Animazione transizione mese
-  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null)
-  const [isAnimating, setIsAnimating] = useState(false)
-
   // Funzione per aprire il modal con i dettagli
   const handlePrenotazioneClick = (pren: Prenotazione) => {
     setSelectedPrenotazione(pren)
@@ -155,36 +101,6 @@ export default function CalendarioPage() {
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
-
-  // Funzioni per navigazione con animazione
-  const goToPrevMonth = useCallback(() => {
-    if (isAnimating) return
-    setSlideDirection('right')
-    setIsAnimating(true)
-    setTimeout(() => {
-      setCurrentDate(new Date(year, month - 1, 1))
-      setSlideDirection(null)
-      setIsAnimating(false)
-    }, 200)
-  }, [year, month, isAnimating])
-
-  const goToNextMonth = useCallback(() => {
-    if (isAnimating) return
-    setSlideDirection('left')
-    setIsAnimating(true)
-    setTimeout(() => {
-      setCurrentDate(new Date(year, month + 1, 1))
-      setSlideDirection(null)
-      setIsAnimating(false)
-    }, 200)
-  }, [year, month, isAnimating])
-
-  // Hook per swipe
-  const { handleTouchStart, handleTouchMove, handleTouchEnd, swipeOffset, isSwiping } = useSwipe(
-    goToNextMonth,  // swipe left = next month
-    goToPrevMonth,  // swipe right = prev month
-    80 // threshold in pixel
-  )
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = getFirstDayOfMonth(year, month)
 
@@ -208,23 +124,15 @@ export default function CalendarioPage() {
   }, [year, month])
 
   const prevMonth = () => {
-    goToPrevMonth()
+    setCurrentDate(new Date(year, month - 1, 1))
   }
 
   const nextMonth = () => {
-    goToNextMonth()
+    setCurrentDate(new Date(year, month + 1, 1))
   }
 
   const goToToday = () => {
-    if (isAnimating) return
-    const today = new Date()
-    if (today.getMonth() !== month || today.getFullYear() !== year) {
-      setIsAnimating(true)
-      setTimeout(() => {
-        setCurrentDate(today)
-        setIsAnimating(false)
-      }, 150)
-    }
+    setCurrentDate(new Date())
   }
 
   const toggleAppartamento = (id: number) => {
@@ -358,42 +266,9 @@ export default function CalendarioPage() {
           </div>
         )}
 
-        {/* Contenitore swipeable per mobile */}
-        <div
-          className="lg:touch-none"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          style={{
-            transform: isSwiping ? `translateX(${swipeOffset}px)` : undefined,
-            transition: isSwiping ? 'none' : 'transform 0.2s ease-out',
-          }}
-        >
-          {/* Indicatore swipe */}
-          {isSwiping && Math.abs(swipeOffset) > 20 && (
-            <div className="lg:hidden flex items-center justify-center py-2 text-sm text-gray-500">
-              {swipeOffset > 0 ? (
-                <span className="flex items-center gap-1">
-                  <ChevronLeft className="w-4 h-4" />
-                  {getMonthName(month === 0 ? 11 : month - 1)}
-                </span>
-              ) : (
-                <span className="flex items-center gap-1">
-                  {getMonthName(month === 11 ? 0 : month + 1)}
-                  <ChevronRight className="w-4 h-4" />
-                </span>
-              )}
-            </div>
-          )}
-
         {/* Timeline View */}
         {!loading && viewMode === 'timeline' && (
-          <div
-            className={cn(
-              "bg-white rounded-xl shadow-sm overflow-hidden transition-opacity duration-200",
-              isAnimating && "opacity-50"
-            )}
-          >
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <div className="min-w-[1200px]">
                 {/* Header with days */}
@@ -491,12 +366,7 @@ export default function CalendarioPage() {
 
         {/* Month View */}
         {!loading && viewMode === 'month' && (
-          <div
-            className={cn(
-              "bg-white rounded-xl shadow-sm overflow-hidden transition-opacity duration-200",
-              isAnimating && "opacity-50"
-            )}
-          >
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             {/* Days Header */}
             <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
               {['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map((day) => (
@@ -565,17 +435,6 @@ export default function CalendarioPage() {
                 )
               })}
             </div>
-          </div>
-        )}
-        </div>
-        {/* Fine contenitore swipeable */}
-
-        {/* Hint swipe per mobile */}
-        {!loading && (
-          <div className="lg:hidden text-center py-2">
-            <p className="text-xs text-gray-400">
-              Scorri per cambiare mese
-            </p>
           </div>
         )}
 
