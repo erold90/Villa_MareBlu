@@ -5,6 +5,56 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
+    const checkInDate = new Date(body.checkIn)
+    const checkOutDate = new Date(body.checkOut)
+
+    // Verifica sovrapposizione per ogni appartamento selezionato
+    // IMPORTANTE: check-out può coincidere con check-in (stesso giorno turnover)
+    // Quindi: nuovoCheckIn < esistenteCheckOut AND nuovoCheckOut > esistenteCheckIn
+    const conflitti = []
+
+    for (const appartamentoId of body.appartamentiIds) {
+      const prenotazioniEsistenti = await prisma.prenotazione.findMany({
+        where: {
+          appartamentoId: appartamentoId,
+          stato: { notIn: ['cancelled'] },
+          AND: [
+            { checkIn: { lt: checkOutDate } },  // check-in esistente < nuovo check-out
+            { checkOut: { gt: checkInDate } },   // check-out esistente > nuovo check-in
+          ],
+        },
+        include: {
+          ospite: true,
+          appartamento: true,
+        },
+      })
+
+      if (prenotazioniEsistenti.length > 0) {
+        for (const pren of prenotazioniEsistenti) {
+          conflitti.push({
+            appartamento: pren.appartamento.nome,
+            ospite: `${pren.ospite.cognome} ${pren.ospite.nome}`,
+            checkIn: pren.checkIn.toISOString().split('T')[0],
+            checkOut: pren.checkOut.toISOString().split('T')[0],
+          })
+        }
+      }
+    }
+
+    if (conflitti.length > 0) {
+      const messaggioConflitti = conflitti.map(c =>
+        `${c.appartamento}: ${c.ospite} (${c.checkIn} - ${c.checkOut})`
+      ).join(', ')
+
+      return NextResponse.json(
+        {
+          error: `Date non disponibili! Conflitto con: ${messaggioConflitti}`,
+          conflitti
+        },
+        { status: 409 }
+      )
+    }
+
     // Crea o trova l'ospite
     let ospite = await prisma.ospite.findFirst({
       where: {

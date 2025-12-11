@@ -5,12 +5,22 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Inizio seed database...')
 
-  // Crea appartamenti
+  // Crea appartamenti con ID fissi (1, 2, 3, 4)
+  // IMPORTANTE: Gli ID devono corrispondere a quelli in src/config/appartamenti.ts
   const appartamenti = await Promise.all([
     prisma.appartamento.upsert({
-      where: { slug: 'appartamento-1' },
-      update: {},
+      where: { id: 1 },
+      update: {
+        nome: 'Appartamento 1',
+        slug: 'appartamento-1',
+        postiLetto: 6,
+        camere: 2,
+        bagni: 1,
+        piano: 'Piano terra',
+        airbnbId: '1203aboribo',
+      },
       create: {
+        id: 1,
         nome: 'Appartamento 1',
         slug: 'appartamento-1',
         postiLetto: 6,
@@ -21,22 +31,40 @@ async function main() {
       },
     }),
     prisma.appartamento.upsert({
-      where: { slug: 'appartamento-2' },
-      update: {},
-      create: {
+      where: { id: 2 },
+      update: {
         nome: 'Appartamento 2',
         slug: 'appartamento-2',
-        postiLetto: 7,
-        camere: 2,
+        postiLetto: 8,
+        camere: 3,
+        bagni: 1,
+        piano: 'Primo piano',
+        airbnbId: '1203aborme',
+      },
+      create: {
+        id: 2,
+        nome: 'Appartamento 2',
+        slug: 'appartamento-2',
+        postiLetto: 8,
+        camere: 3,
         bagni: 1,
         piano: 'Primo piano',
         airbnbId: '1203aborme',
       },
     }),
     prisma.appartamento.upsert({
-      where: { slug: 'appartamento-3' },
-      update: {},
+      where: { id: 3 },
+      update: {
+        nome: 'Appartamento 3',
+        slug: 'appartamento-3',
+        postiLetto: 4,
+        camere: 1,
+        bagni: 1,
+        piano: 'Secondo piano',
+        airbnbId: '1203aborna',
+      },
       create: {
+        id: 3,
         nome: 'Appartamento 3',
         slug: 'appartamento-3',
         postiLetto: 4,
@@ -47,12 +75,21 @@ async function main() {
       },
     }),
     prisma.appartamento.upsert({
-      where: { slug: 'appartamento-4' },
-      update: {},
-      create: {
+      where: { id: 4 },
+      update: {
         nome: 'Appartamento 4',
         slug: 'appartamento-4',
-        postiLetto: 6,
+        postiLetto: 5,
+        camere: 2,
+        bagni: 1,
+        piano: 'Secondo piano',
+        airbnbId: '1203abornb',
+      },
+      create: {
+        id: 4,
+        nome: 'Appartamento 4',
+        slug: 'appartamento-4',
+        postiLetto: 5,
         camere: 2,
         bagni: 1,
         piano: 'Secondo piano',
@@ -150,11 +187,12 @@ async function main() {
   console.log('Ospiti creati:', ospiti.length)
 
   // Crea prenotazioni per Agosto 2025 (periodo Alta stagione)
+  // NOTA: Usa ID fissi (1, 2, 3, 4) per appartamenti
   const prenotazioni = await Promise.all([
     // Prenotazione 1 - Appartamento 1, prima settimana agosto
     prisma.prenotazione.create({
       data: {
-        appartamentoId: appartamenti[0].id,
+        appartamentoId: 1,  // ID fisso
         ospiteId: ospiti[0].id,
         checkIn: new Date('2025-08-02'),
         checkOut: new Date('2025-08-09'),
@@ -178,7 +216,7 @@ async function main() {
     // Prenotazione 2 - Appartamento 2, prima settimana agosto
     prisma.prenotazione.create({
       data: {
-        appartamentoId: appartamenti[1].id,
+        appartamentoId: 2,  // ID fisso
         ospiteId: ospiti[1].id,
         checkIn: new Date('2025-08-02'),
         checkOut: new Date('2025-08-09'),
@@ -203,7 +241,7 @@ async function main() {
     // Prenotazione 3 - Appartamento 3, prima settimana agosto
     prisma.prenotazione.create({
       data: {
-        appartamentoId: appartamenti[2].id,
+        appartamentoId: 3,  // ID fisso
         ospiteId: ospiti[2].id,
         checkIn: new Date('2025-08-02'),
         checkOut: new Date('2025-08-09'),
@@ -225,7 +263,7 @@ async function main() {
     // Prenotazione 4 - Appartamento 4, prima settimana agosto
     prisma.prenotazione.create({
       data: {
-        appartamentoId: appartamenti[3].id,
+        appartamentoId: 4,  // ID fisso
         ospiteId: ospiti[3].id,
         checkIn: new Date('2025-08-02'),
         checkOut: new Date('2025-08-09'),
@@ -251,7 +289,7 @@ async function main() {
     // Prenotazione 5 - Appartamento 1, seconda settimana agosto
     prisma.prenotazione.create({
       data: {
-        appartamentoId: appartamenti[0].id,
+        appartamentoId: 1,  // ID fisso
         ospiteId: ospiti[4].id,
         checkIn: new Date('2025-08-09'),
         checkOut: new Date('2025-08-16'),
@@ -275,7 +313,7 @@ async function main() {
     // Prenotazione 6 - Appartamento 2, seconda settimana agosto
     prisma.prenotazione.create({
       data: {
-        appartamentoId: appartamenti[1].id,
+        appartamentoId: 2,  // ID fisso
         ospiteId: ospiti[5].id,
         checkIn: new Date('2025-08-09'),
         checkOut: new Date('2025-08-16'),
@@ -299,7 +337,7 @@ async function main() {
     // Prenotazione 7 - Appartamento 3, settimana Ferragosto (Altissima)
     prisma.prenotazione.create({
       data: {
-        appartamentoId: appartamenti[2].id,
+        appartamentoId: 3,  // ID fisso
         ospiteId: ospiti[6].id,
         checkIn: new Date('2025-08-16'),
         checkOut: new Date('2025-08-23'),
@@ -323,7 +361,7 @@ async function main() {
     // Prenotazione 8 - Appartamento 4, settimana Ferragosto (Altissima)
     prisma.prenotazione.create({
       data: {
-        appartamentoId: appartamenti[3].id,
+        appartamentoId: 4,  // ID fisso
         ospiteId: ospiti[7].id,
         checkIn: new Date('2025-08-16'),
         checkOut: new Date('2025-08-23'),
@@ -348,7 +386,7 @@ async function main() {
 
   console.log('Prenotazioni create:', prenotazioni.length)
 
-  // Crea alcuni task
+  // Crea alcuni task con ID appartamento fissi
   const tasks = await Promise.all([
     prisma.task.create({
       data: {
@@ -357,7 +395,7 @@ async function main() {
         priorita: 'high',
         stato: 'pending',
         categoria: 'pulizie',
-        appartamentoId: appartamenti[0].id,
+        appartamentoId: 1,  // ID fisso
         scadenza: new Date('2025-08-09'),
       },
     }),
@@ -368,7 +406,7 @@ async function main() {
         priorita: 'medium',
         stato: 'pending',
         categoria: 'check-in',
-        appartamentoId: appartamenti[2].id,
+        appartamentoId: 3,  // ID fisso
         scadenza: new Date('2025-08-02'),
       },
     }),
@@ -379,7 +417,7 @@ async function main() {
         priorita: 'medium',
         stato: 'in_progress',
         categoria: 'manutenzione',
-        appartamentoId: appartamenti[1].id,
+        appartamentoId: 2,  // ID fisso
       },
     }),
   ])
