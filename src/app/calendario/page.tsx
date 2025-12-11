@@ -180,13 +180,13 @@ export default function CalendarioPage() {
 
   // Prenotazione che ha check-out in questo giorno
   const getCheckOutForDay = (day: number, appartamentoId: number) => {
-    const date = new Date(year, month, day)
     return prenotazioni.find((p) => {
       if (p.appartamentoId !== appartamentoId) return false
       const checkOut = new Date(p.checkOut)
-      return checkOut.getDate() === day &&
+      // Confronta solo anno-mese-giorno ignorando l'orario
+      return checkOut.getFullYear() === year &&
         checkOut.getMonth() === month &&
-        checkOut.getFullYear() === year
+        checkOut.getDate() === day
     })
   }
 
