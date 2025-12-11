@@ -103,7 +103,7 @@ function getFirstDayOfMonth(year: number, month: number) {
 export default function CalendarioPage() {
   const router = useRouter()
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [viewMode, setViewMode] = useState<'month' | 'timeline'>('timeline')
+  // Rimossa vista mensile - solo timeline
   const [selectedAppartamenti, setSelectedAppartamenti] = useState<number[]>(
     appartamentiConfig.map((a) => a.id)
   )
@@ -167,41 +167,51 @@ export default function CalendarioPage() {
     )
   }
 
+  // Estrae solo la data (senza orario) da una stringa ISO per confronti affidabili
+  const getDateOnly = (isoString: string) => {
+    // Prende solo la parte YYYY-MM-DD dalla stringa ISO
+    return isoString.split('T')[0]
+  }
+
+  // Crea stringa YYYY-MM-DD dal giorno corrente nel calendario
+  const formatDayAsISO = (day: number) => {
+    const m = (month + 1).toString().padStart(2, '0')
+    const d = day.toString().padStart(2, '0')
+    return `${year}-${m}-${d}`
+  }
+
   // Prenotazioni attive in un giorno (check-in <= date < check-out)
   const getPrenotazioniForDay = (day: number, appartamentoId: number) => {
-    const date = new Date(year, month, day)
+    const dateStr = formatDayAsISO(day)
     return prenotazioni.filter((p) => {
       if (p.appartamentoId !== appartamentoId) return false
-      const checkIn = new Date(p.checkIn)
-      const checkOut = new Date(p.checkOut)
-      return date >= checkIn && date < checkOut
+      const checkInDate = getDateOnly(p.checkIn)
+      const checkOutDate = getDateOnly(p.checkOut)
+      // Include il giorno se: checkIn <= date < checkOut
+      return dateStr >= checkInDate && dateStr < checkOutDate
     })
   }
 
   // Prenotazione che ha check-out in questo giorno
   const getCheckOutForDay = (day: number, appartamentoId: number) => {
+    const dateStr = formatDayAsISO(day)
     return prenotazioni.find((p) => {
       if (p.appartamentoId !== appartamentoId) return false
-      const checkOut = new Date(p.checkOut)
-      // Confronta solo anno-mese-giorno ignorando l'orario
-      return checkOut.getFullYear() === year &&
-        checkOut.getMonth() === month &&
-        checkOut.getDate() === day
+      const checkOutDate = getDateOnly(p.checkOut)
+      return checkOutDate === dateStr
     })
   }
 
   const isCheckIn = (day: number, prenotazione: Prenotazione) => {
-    const checkIn = new Date(prenotazione.checkIn)
-    return checkIn.getDate() === day &&
-      checkIn.getMonth() === month &&
-      checkIn.getFullYear() === year
+    const dateStr = formatDayAsISO(day)
+    const checkInDate = getDateOnly(prenotazione.checkIn)
+    return checkInDate === dateStr
   }
 
   const isCheckOut = (day: number, prenotazione: Prenotazione) => {
-    const checkOut = new Date(prenotazione.checkOut)
-    return checkOut.getDate() === day &&
-      checkOut.getMonth() === month &&
-      checkOut.getFullYear() === year
+    const dateStr = formatDayAsISO(day)
+    const checkOutDate = getDateOnly(prenotazione.checkOut)
+    return checkOutDate === dateStr
   }
 
   // Generate array of days for timeline
@@ -246,31 +256,6 @@ export default function CalendarioPage() {
               </span>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-              <button
-                onClick={() => setViewMode('timeline')}
-                className={cn(
-                  'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-                  viewMode === 'timeline'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                )}
-              >
-                Timeline
-              </button>
-              <button
-                onClick={() => setViewMode('month')}
-                className={cn(
-                  'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-                  viewMode === 'month'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                )}
-              >
-                Mese
-              </button>
-            </div>
 
             {/* Apartment Filters */}
             <div className="flex items-center gap-2 lg:ml-auto flex-wrap">
@@ -306,7 +291,7 @@ export default function CalendarioPage() {
         )}
 
         {/* Timeline View */}
-        {!loading && viewMode === 'timeline' && (
+        {!loading && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <div className="min-w-[1200px]">
@@ -381,32 +366,37 @@ export default function CalendarioPage() {
                                 isToday(date) && 'bg-blue-50/50 dark:bg-blue-900/20'
                               )}
                             >
-                              {hasTransition ? (
-                                // Giorno di transizione: due barre separate (check-out sopra, check-in sotto)
-                                <>
-                                  {/* Barra superiore - Check-out (chi esce) */}
+                              {hasTransition && checkOutPren && checkInPren ? (
+                                // Giorno di transizione: diagonale con due colori
+                                <div className="absolute top-2 bottom-2 left-0 right-0 cursor-pointer overflow-hidden">
+                                  {/* Parte superiore - Check-out (chi esce) con clip-path triangolare */}
                                   <div
                                     onClick={() => handlePrenotazioneClick(checkOutPren)}
                                     className={cn(
-                                      'absolute top-1 left-0 right-0 h-[45%] flex items-center justify-end cursor-pointer hover:opacity-80 transition-all rounded-r-lg',
+                                      'absolute inset-0 hover:brightness-110 transition-all',
                                       getStatoColore(checkOutPren)
                                     )}
+                                    style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
                                     title={`CHECK-OUT: ${checkOutPren.ospiteCognome}`}
-                                  >
-                                    <span className="px-1 text-white text-[10px] font-bold">←</span>
-                                  </div>
-                                  {/* Barra inferiore - Check-in (chi entra) */}
+                                  />
+                                  {/* Parte inferiore - Check-in (chi entra) con clip-path triangolare */}
                                   <div
                                     onClick={() => handlePrenotazioneClick(checkInPren)}
                                     className={cn(
-                                      'absolute bottom-1 left-0 right-0 h-[45%] flex items-center cursor-pointer hover:opacity-80 transition-all rounded-l-lg',
+                                      'absolute inset-0 hover:brightness-110 transition-all',
                                       getStatoColore(checkInPren)
                                     )}
+                                    style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}
                                     title={`CHECK-IN: ${checkInPren.ospiteCognome}`}
-                                  >
-                                    <span className="px-1 text-white text-[10px] font-bold">→</span>
-                                  </div>
-                                </>
+                                  />
+                                  {/* Linea diagonale di separazione */}
+                                  <div
+                                    className="absolute inset-0 pointer-events-none"
+                                    style={{
+                                      background: 'linear-gradient(to bottom right, transparent calc(50% - 1px), #1f2937 calc(50% - 1px), #1f2937 calc(50% + 1px), transparent calc(50% + 1px))'
+                                    }}
+                                  />
+                                </div>
                               ) : (
                                 // Giorno normale
                                 prenotazioniGiorno.map((pren) => {
@@ -443,79 +433,6 @@ export default function CalendarioPage() {
           </div>
         )}
 
-        {/* Month View */}
-        {!loading && viewMode === 'month' && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-            {/* Days Header */}
-            <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-              {['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map((day) => (
-                <div key={day} className="p-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7">
-              {/* Empty cells for days before month starts */}
-              {Array.from({ length: firstDay }).map((_, i) => (
-                <div key={`empty-${i}`} className="min-h-[100px] p-2 bg-gray-50/50 dark:bg-gray-700/30 border-b border-r border-gray-100 dark:border-gray-700" />
-              ))}
-
-              {/* Days of the month */}
-              {days.map((day) => {
-                const date = new Date(year, month, day)
-                const isTodayDate = isToday(date)
-                const allPrenotazioni = appartamentiConfig
-                  .filter((app) => selectedAppartamenti.includes(app.id))
-                  .flatMap((app) =>
-                    getPrenotazioniForDay(day, app.id).map((p) => ({
-                      ...p,
-                      colore: app.colore,
-                    }))
-                  )
-
-                return (
-                  <div
-                    key={day}
-                    className={cn(
-                      'min-h-[100px] p-2 border-b border-r border-gray-100 dark:border-gray-700',
-                      isTodayDate && 'bg-blue-50 dark:bg-blue-900/30'
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={cn(
-                        'w-7 h-7 flex items-center justify-center rounded-full text-sm font-semibold',
-                        isTodayDate ? 'bg-blue-600 text-white' : 'text-gray-900 dark:text-white'
-                      )}>
-                        {day}
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      {allPrenotazioni.slice(0, 3).map((pren) => (
-                        <div
-                          key={pren.id}
-                          onClick={() => handlePrenotazioneClick(pren)}
-                          className="text-xs px-2 py-1 rounded text-white truncate cursor-pointer hover:opacity-80 hover:scale-[1.02] transition-all"
-                          style={{ backgroundColor: pren.colore }}
-                        >
-                          {isCheckIn(day, pren) && '→ '}
-                          {truncateCognome(pren.ospiteCognome)}
-                          {isCheckOut(day, pren) && ' ←'}
-                        </div>
-                      ))}
-                      {allPrenotazioni.length > 3 && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 pl-2">
-                          +{allPrenotazioni.length - 3} altri
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Legend */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
@@ -542,9 +459,10 @@ export default function CalendarioPage() {
               <span className="text-sm text-gray-600 dark:text-gray-300">Cancellata</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-5 h-6 relative overflow-hidden rounded flex flex-col gap-px">
-                <span className="flex-1 bg-yellow-400 rounded-r flex items-center justify-end px-0.5 text-white text-[8px]">←</span>
-                <span className="flex-1 bg-green-500 rounded-l flex items-center px-0.5 text-white text-[8px]">→</span>
+              <span className="w-5 h-6 relative overflow-hidden rounded">
+                <span className="absolute inset-0 bg-yellow-400" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
+                <span className="absolute inset-0 bg-green-500" style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }} />
+                <span className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, transparent calc(50% - 1px), #1f2937 calc(50% - 1px), #1f2937 calc(50% + 1px), transparent calc(50% + 1px))' }} />
               </span>
               <span className="text-sm text-gray-600 dark:text-gray-300">Cambio ospite</span>
             </div>
