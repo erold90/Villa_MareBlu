@@ -358,50 +358,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Pending Tasks */}
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Task da fare</h3>
-              <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                {tasks.length}
-              </span>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {tasks.length === 0 ? (
-                <div className="p-4 text-sm text-gray-500">Nessun task pendente</div>
-              ) : (
-                tasks.map((task) => (
-                  <div key={task.id} className="p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{task.titolo}</p>
-                        {task.scadenza && (
-                          <p className="text-sm text-gray-500">
-                            Scadenza: {formatDateShort(task.scadenza)}
-                          </p>
-                        )}
-                      </div>
-                      <span className={cn(
-                        'text-xs px-2 py-1 rounded-full font-medium',
-                        priorityColors[task.priorita] || priorityColors.medium
-                      )}>
-                        {task.priorita}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="p-4 border-t border-gray-100">
-              <a href="/task" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                Vedi tutte <ArrowRight className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
         </div>
 
         {/* Apartments Status */}
