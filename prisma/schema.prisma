@@ -1,0 +1,267 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Per sviluppo locale usa SQLite, per produzione (Vercel) usa PostgreSQL
+  // Cambia il provider quando passi in produzione
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Appartamenti
+model Appartamento {
+  id             Int           @id @default(autoincrement())
+  nome           String
+  slug           String        @unique
+  descrizione    String?
+  postiLetto     Int
+  camere         Int
+  bagni          Int
+  piano          String?
+  airbnbId       String?
+  bookingId      String?
+  attivo         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  prenotazioni   Prenotazione[]
+  periodiPrezzo  PeriodoPrezzo[]
+  blocchi        BloccoCalendario[]
+}
+
+// Periodi prezzo
+model PeriodoPrezzo {
+  id              Int          @id @default(autoincrement())
+  appartamentoId  Int
+  nome            String
+  dataInizio      DateTime
+  dataFine        DateTime
+  prezzoSettimana Int
+  prezzoNotte     Int
+  minNotti        Int          @default(7)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  appartamento    Appartamento @relation(fields: [appartamentoId], references: [id], onDelete: Cascade)
+}
+
+// Ospiti
+model Ospite {
+  id              Int           @id @default(autoincrement())
+  nome            String
+  cognome         String
+  email           String?
+  telefono        String?
+  codiceFiscale   String?
+  indirizzo       String?
+  citta           String?
+  cap             String?
+  provincia       String?
+  nazione         String        @default("Italia")
+  documentoTipo   String?       // CI, Passaporto
+  documentoNumero String?
+  note            String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  prenotazioni    Prenotazione[]
+}
+
+// Prenotazioni
+model Prenotazione {
+  id                  Int           @id @default(autoincrement())
+  appartamentoId      Int
+  ospiteId            Int
+
+  // Date
+  checkIn             DateTime
+  checkOut            DateTime
+
+  // Ospiti
+  numAdulti           Int           @default(2)
+  numBambini          Int           @default(0)
+  numNeonati          Int           @default(0)
+
+  // Animali
+  animali             Boolean       @default(false)
+  animaliDettaglio    String?       // Es: "1 cane piccolo", "2 gatti"
+
+  // Biancheria
+  biancheria          Boolean       @default(false)
+  bianchieriaSets     Int           @default(0)  // Numero di set richiesti
+  biancheriaCosto     Float         @default(0)  // Costo totale biancheria (€10 x persona)
+
+  // Prezzi
+  prezzoSoggiorno     Float         // Prezzo appartamento
+  prezzoExtra         Float         @default(0)  // Altri extra
+  tassaSoggiorno      Float         @default(0)
+  totale              Float
+
+  // Pagamenti
+  acconto             Float         @default(0)
+  accontoData         DateTime?
+  accontoPagato       Boolean       @default(false)
+  saldo               Float         @default(0)
+  saldoData           DateTime?
+  saldoPagato         Boolean       @default(false)
+
+  // Cauzione
+  cauzione            Float         @default(200)
+  cauzioneIncassata   Boolean       @default(false)
+  cauzioneRestituita  Boolean       @default(false)
+  cauzioneNote        String?
+
+  // Stato
+  stato               String        @default("pending") // pending, confirmed, checkedin, completed, cancelled
+  fonte               String        @default("direct")  // direct, airbnb, booking, altro
+  fonteRiferimento    String?       // ID prenotazione OTA
+
+  // Note
+  noteInterne         String?
+  noteOspite          String?
+  richiesteSpeciali   String?
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  appartamento        Appartamento  @relation(fields: [appartamentoId], references: [id])
+  ospite              Ospite        @relation(fields: [ospiteId], references: [id])
+  pagamenti           Pagamento[]
+  spese               Spesa[]
+}
+
+// Pagamenti
+model Pagamento {
+  id              Int           @id @default(autoincrement())
+  prenotazioneId  Int
+  importo         Float
+  tipo            String        // acconto, saldo, cauzione, rimborso
+  metodo          String        // contanti, bonifico, carta, paypal, airbnb, booking
+  data            DateTime
+  riferimento     String?       // Numero transazione, etc
+  note            String?
+  createdAt       DateTime      @default(now())
+
+  prenotazione    Prenotazione  @relation(fields: [prenotazioneId], references: [id], onDelete: Cascade)
+}
+
+// Spese associate alle prenotazioni o generali
+model Spesa {
+  id              Int           @id @default(autoincrement())
+  prenotazioneId  Int?
+  categoria       String        // pulizie, manutenzione, utenze, commissioni, altro
+  descrizione     String
+  importo         Float
+  data            DateTime
+  fornitore       String?
+  fattura         String?       // Numero fattura
+  pagato          Boolean       @default(false)
+  note            String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  prenotazione    Prenotazione? @relation(fields: [prenotazioneId], references: [id], onDelete: SetNull)
+}
+
+// Blocchi calendario (periodi non disponibili)
+model BloccoCalendario {
+  id              Int           @id @default(autoincrement())
+  appartamentoId  Int
+  dataInizio      DateTime
+  dataFine        DateTime
+  motivo          String?       // manutenzione, personale, altro
+  note            String?
+  createdAt       DateTime      @default(now())
+
+  appartamento    Appartamento  @relation(fields: [appartamentoId], references: [id], onDelete: Cascade)
+}
+
+// Task/Todo per gestione attivita'
+model Task {
+  id              Int           @id @default(autoincrement())
+  titolo          String
+  descrizione     String?
+  priorita        String        @default("medium") // low, medium, high, urgent
+  stato           String        @default("pending") // pending, in_progress, completed, cancelled
+  categoria       String        @default("generale") // pulizie, manutenzione, check-in, check-out, amministrazione, generale
+  appartamentoId  Int?
+  prenotazioneId  Int?
+  scadenza        DateTime?
+  completatoIl    DateTime?
+  assegnatoA      String?
+  note            String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+// Impostazioni
+model Impostazione {
+  id        Int      @id @default(autoincrement())
+  chiave    String   @unique
+  valore    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Entrate generali (non legate a prenotazioni)
+model Entrata {
+  id          Int      @id @default(autoincrement())
+  descrizione String
+  importo     Float
+  categoria   String   // affitto, servizi, altro
+  data        DateTime
+  riferimento String?
+  note        String?
+  createdAt   DateTime @default(now())
+}
+
+// Pulizie
+model Pulizia {
+  id              Int           @id @default(autoincrement())
+  appartamentoId  Int
+  data            DateTime      // Data in cui fare la pulizia
+  orarioCheckout  String?       // "10:00" o "11:00"
+  tipo            String        // checkout, apertura_stagione, chiusura_stagione, manuale, suggerita
+  stato           String        @default("da_fare") // da_fare, completata, annullata
+  prenotazioneId  Int?          // Collegamento opzionale alla prenotazione (per checkout)
+  note            String?
+  completataIl    DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+// Storico stagioni per confronti anno su anno
+model StagioneStorico {
+  id                    Int      @id @default(autoincrement())
+  anno                  Int      @unique
+
+  // Totali
+  ricaviTotali          Float
+  prenotazioniTotali    Int
+  ricavoMedio           Float
+
+  // Dati per mese (JSON: {giugno: 300, luglio: 1500, ...})
+  ricaviPerMese         String   // JSON
+  prenotazioniPerMese   String   // JSON
+
+  // Dati per appartamento (JSON: {1: {ricavi: 2950, prenotazioni: 2}, ...})
+  datiPerAppartamento   String   // JSON
+
+  // Dati per fonte (JSON: {direct: 5000, airbnb: 3000, booking: 2000})
+  ricaviPerFonte        String?  // JSON
+
+  // Dati per nazionalità (JSON: {Italia: 6000, Germania: 3000, ...})
+  ricaviPerNazionalita  String?  // JSON
+
+  // Metriche aggiuntive
+  durataMediaSoggiorno  Float?   // notti medie per prenotazione
+  tassoOccupazione      Float?   // percentuale
+
+  note                  String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
