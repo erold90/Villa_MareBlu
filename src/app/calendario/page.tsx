@@ -294,11 +294,11 @@ export default function CalendarioPage() {
         {!loading && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <div className="min-w-[1200px]">
+              <div className="min-w-[1400px]">
                 {/* Header with days */}
                 <div className="flex border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
-                  <div className="w-32 lg:w-40 flex-shrink-0 p-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 font-semibold text-gray-700 dark:text-gray-200">
-                    Appartamento
+                  <div className="w-24 flex-shrink-0 p-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 font-semibold text-gray-700 dark:text-gray-200 sticky left-0 z-20">
+                    App.
                   </div>
                   <div className="flex flex-1">
                     {days.map((day) => {
@@ -309,7 +309,7 @@ export default function CalendarioPage() {
                         <div
                           key={day}
                           className={cn(
-                            'flex-1 min-w-[40px] p-2 text-center border-r border-gray-100 dark:border-gray-700 last:border-r-0',
+                            'flex-1 min-w-[40px] py-2 text-center border-r border-gray-100 dark:border-gray-700 last:border-r-0',
                             isWeekend && 'bg-gray-50 dark:bg-gray-700/50',
                             isTodayDate && 'bg-blue-50 dark:bg-blue-900/30'
                           )}
@@ -332,18 +332,13 @@ export default function CalendarioPage() {
                   .filter((app) => selectedAppartamenti.includes(app.id))
                   .map((app) => (
                     <div key={app.id} className="flex border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                      <div className="w-32 lg:w-40 flex-shrink-0 p-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-semibold text-sm"
-                            style={{ backgroundColor: app.colore }}
-                          >
-                            {app.id}
-                          </div>
-                          <div className="hidden lg:block">
-                            <p className="font-medium text-gray-900 dark:text-white text-sm">{app.nome}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{app.postiLetto} posti</p>
-                          </div>
+                      <div className="w-24 flex-shrink-0 p-2 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 sticky left-0 z-10 flex items-center justify-center">
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
+                          style={{ backgroundColor: app.colore }}
+                          title={`${app.nome} - ${app.postiLetto} posti`}
+                        >
+                          {app.id}
                         </div>
                       </div>
                       <div className="flex flex-1 relative min-h-[60px]">
@@ -361,14 +356,14 @@ export default function CalendarioPage() {
                             <div
                               key={day}
                               className={cn(
-                                'flex-1 min-w-[40px] border-r border-gray-100 dark:border-gray-700 last:border-r-0 relative overflow-hidden',
+                                'flex-1 min-w-[40px] border-r border-gray-100 dark:border-gray-700 last:border-r-0 relative',
                                 isWeekend && 'bg-gray-50/50 dark:bg-gray-700/30',
                                 isToday(date) && 'bg-blue-50/50 dark:bg-blue-900/20'
                               )}
                             >
                               {hasTransition && checkOutPren && checkInPren ? (
                                 // Giorno di transizione: diagonale con due colori
-                                <div className="absolute top-2 bottom-2 left-0 right-0 cursor-pointer overflow-hidden">
+                                <div className="absolute inset-y-2 inset-x-0 cursor-pointer overflow-hidden">
                                   {/* Parte superiore - Check-out (chi esce) con clip-path triangolare */}
                                   <div
                                     onClick={() => handlePrenotazioneClick(checkOutPren)}
@@ -408,7 +403,7 @@ export default function CalendarioPage() {
                                       key={pren.id}
                                       onClick={() => handlePrenotazioneClick(pren)}
                                       className={cn(
-                                        'absolute top-2 bottom-2 left-0 right-0 flex items-center justify-center text-white text-xs font-medium cursor-pointer hover:opacity-80 transition-all',
+                                        'absolute inset-y-2 inset-x-0 flex items-center justify-center text-white text-xs font-medium cursor-pointer hover:opacity-80 transition-all',
                                         getStatoColore(pren),
                                         isStart && 'rounded-l-lg',
                                         isEnd && 'rounded-r-lg'
@@ -459,7 +454,7 @@ export default function CalendarioPage() {
               <span className="text-sm text-gray-600 dark:text-gray-300">Cancellata</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-5 h-6 relative overflow-hidden rounded">
+              <span className="w-4 h-4 relative overflow-hidden rounded">
                 <span className="absolute inset-0 bg-yellow-400" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
                 <span className="absolute inset-0 bg-green-500" style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }} />
                 <span className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, transparent calc(50% - 1px), #1f2937 calc(50% - 1px), #1f2937 calc(50% + 1px), transparent calc(50% + 1px))' }} />
