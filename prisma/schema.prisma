@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -60,7 +60,7 @@ model Ospite {
   cap             String?
   provincia       String?
   nazione         String        @default("Italia")
-  documentoTipo   String?       // CI, Passaporto
+  documentoTipo   String?
   documentoNumero String?
   note            String?
   createdAt       DateTime      @default(now())
@@ -75,31 +75,25 @@ model Prenotazione {
   appartamentoId      Int
   ospiteId            Int
 
-  // Date
   checkIn             DateTime
   checkOut            DateTime
 
-  // Ospiti
   numAdulti           Int           @default(2)
   numBambini          Int           @default(0)
   numNeonati          Int           @default(0)
 
-  // Animali
   animali             Boolean       @default(false)
-  animaliDettaglio    String?       // Es: "1 cane piccolo", "2 gatti"
+  animaliDettaglio    String?
 
-  // Biancheria
   biancheria          Boolean       @default(false)
-  bianchieriaSets     Int           @default(0)  // Numero di set richiesti
-  biancheriaCosto     Float         @default(0)  // Costo totale biancheria (€10 x persona)
+  bianchieriaSets     Int           @default(0)
+  biancheriaCosto     Float         @default(0)
 
-  // Prezzi
-  prezzoSoggiorno     Float         // Prezzo appartamento
-  prezzoExtra         Float         @default(0)  // Altri extra
+  prezzoSoggiorno     Float
+  prezzoExtra         Float         @default(0)
   tassaSoggiorno      Float         @default(0)
   totale              Float
 
-  // Pagamenti
   acconto             Float         @default(0)
   accontoData         DateTime?
   accontoPagato       Boolean       @default(false)
@@ -107,18 +101,15 @@ model Prenotazione {
   saldoData           DateTime?
   saldoPagato         Boolean       @default(false)
 
-  // Cauzione
   cauzione            Float         @default(200)
   cauzioneIncassata   Boolean       @default(false)
   cauzioneRestituita  Boolean       @default(false)
   cauzioneNote        String?
 
-  // Stato
-  stato               String        @default("pending") // pending, confirmed, checkedin, completed, cancelled
-  fonte               String        @default("direct")  // direct, airbnb, booking, altro
-  fonteRiferimento    String?       // ID prenotazione OTA
+  stato               String        @default("pending")
+  fonte               String        @default("direct")
+  fonteRiferimento    String?
 
-  // Note
   noteInterne         String?
   noteOspite          String?
   richiesteSpeciali   String?
@@ -137,26 +128,26 @@ model Pagamento {
   id              Int           @id @default(autoincrement())
   prenotazioneId  Int
   importo         Float
-  tipo            String        // acconto, saldo, cauzione, rimborso
-  metodo          String        // contanti, bonifico, carta, paypal, airbnb, booking
+  tipo            String
+  metodo          String
   data            DateTime
-  riferimento     String?       // Numero transazione, etc
+  riferimento     String?
   note            String?
   createdAt       DateTime      @default(now())
 
   prenotazione    Prenotazione  @relation(fields: [prenotazioneId], references: [id], onDelete: Cascade)
 }
 
-// Spese associate alle prenotazioni o generali
+// Spese
 model Spesa {
   id              Int           @id @default(autoincrement())
   prenotazioneId  Int?
-  categoria       String        // pulizie, manutenzione, utenze, commissioni, altro
+  categoria       String
   descrizione     String
   importo         Float
   data            DateTime
   fornitore       String?
-  fattura         String?       // Numero fattura
+  fattura         String?
   pagato          Boolean       @default(false)
   note            String?
   createdAt       DateTime      @default(now())
@@ -165,27 +156,27 @@ model Spesa {
   prenotazione    Prenotazione? @relation(fields: [prenotazioneId], references: [id], onDelete: SetNull)
 }
 
-// Blocchi calendario (periodi non disponibili)
+// Blocchi calendario
 model BloccoCalendario {
   id              Int           @id @default(autoincrement())
   appartamentoId  Int
   dataInizio      DateTime
   dataFine        DateTime
-  motivo          String?       // manutenzione, personale, altro
+  motivo          String?
   note            String?
   createdAt       DateTime      @default(now())
 
   appartamento    Appartamento  @relation(fields: [appartamentoId], references: [id], onDelete: Cascade)
 }
 
-// Task/Todo per gestione attivita'
+// Task
 model Task {
   id              Int           @id @default(autoincrement())
   titolo          String
   descrizione     String?
-  priorita        String        @default("medium") // low, medium, high, urgent
-  stato           String        @default("pending") // pending, in_progress, completed, cancelled
-  categoria       String        @default("generale") // pulizie, manutenzione, check-in, check-out, amministrazione, generale
+  priorita        String        @default("medium")
+  stato           String        @default("pending")
+  categoria       String        @default("generale")
   appartamentoId  Int?
   prenotazioneId  Int?
   scadenza        DateTime?
@@ -205,12 +196,12 @@ model Impostazione {
   updatedAt DateTime @updatedAt
 }
 
-// Entrate generali (non legate a prenotazioni)
+// Entrate
 model Entrata {
   id          Int      @id @default(autoincrement())
   descrizione String
   importo     Float
-  categoria   String   // affitto, servizi, altro
+  categoria   String
   data        DateTime
   riferimento String?
   note        String?
@@ -221,44 +212,31 @@ model Entrata {
 model Pulizia {
   id              Int           @id @default(autoincrement())
   appartamentoId  Int
-  data            DateTime      // Data in cui fare la pulizia
-  orarioCheckout  String?       // "10:00" o "11:00"
-  tipo            String        // checkout, apertura_stagione, chiusura_stagione, manuale, suggerita
-  stato           String        @default("da_fare") // da_fare, completata, annullata
-  prenotazioneId  Int?          // Collegamento opzionale alla prenotazione (per checkout)
+  data            DateTime
+  orarioCheckout  String?
+  tipo            String
+  stato           String        @default("da_fare")
+  prenotazioneId  Int?
   note            String?
   completataIl    DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 }
 
-// Storico stagioni per confronti anno su anno
+// Storico stagioni
 model StagioneStorico {
   id                    Int      @id @default(autoincrement())
   anno                  Int      @unique
-
-  // Totali
   ricaviTotali          Float
   prenotazioniTotali    Int
   ricavoMedio           Float
-
-  // Dati per mese (JSON: {giugno: 300, luglio: 1500, ...})
-  ricaviPerMese         String   // JSON
-  prenotazioniPerMese   String   // JSON
-
-  // Dati per appartamento (JSON: {1: {ricavi: 2950, prenotazioni: 2}, ...})
-  datiPerAppartamento   String   // JSON
-
-  // Dati per fonte (JSON: {direct: 5000, airbnb: 3000, booking: 2000})
-  ricaviPerFonte        String?  // JSON
-
-  // Dati per nazionalità (JSON: {Italia: 6000, Germania: 3000, ...})
-  ricaviPerNazionalita  String?  // JSON
-
-  // Metriche aggiuntive
-  durataMediaSoggiorno  Float?   // notti medie per prenotazione
-  tassoOccupazione      Float?   // percentuale
-
+  ricaviPerMese         String
+  prenotazioniPerMese   String
+  datiPerAppartamento   String
+  ricaviPerFonte        String?
+  ricaviPerNazionalita  String?
+  durataMediaSoggiorno  Float?
+  tassoOccupazione      Float?
   note                  String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
