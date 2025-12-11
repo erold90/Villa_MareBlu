@@ -167,6 +167,7 @@ export default function CalendarioPage() {
     )
   }
 
+  // Prenotazioni attive in un giorno (check-in <= date < check-out)
   const getPrenotazioniForDay = (day: number, appartamentoId: number) => {
     const date = new Date(year, month, day)
     return prenotazioni.filter((p) => {
@@ -174,6 +175,18 @@ export default function CalendarioPage() {
       const checkIn = new Date(p.checkIn)
       const checkOut = new Date(p.checkOut)
       return date >= checkIn && date < checkOut
+    })
+  }
+
+  // Prenotazione che ha check-out in questo giorno
+  const getCheckOutForDay = (day: number, appartamentoId: number) => {
+    const date = new Date(year, month, day)
+    return prenotazioni.find((p) => {
+      if (p.appartamentoId !== appartamentoId) return false
+      const checkOut = new Date(p.checkOut)
+      return checkOut.getDate() === day &&
+        checkOut.getMonth() === month &&
+        checkOut.getFullYear() === year
     })
   }
 
@@ -354,8 +367,8 @@ export default function CalendarioPage() {
                           const isWeekend = date.getDay() === 0 || date.getDay() === 6
                           const prenotazioniGiorno = getPrenotazioniForDay(day, app.id)
 
-                          // Verifica se c'è una transizione (check-out + check-in nello stesso giorno)
-                          const checkOutPren = prenotazioniGiorno.find(p => isCheckOut(day, p))
+                          // Verifica se c'è una transizione (check-out di una + check-in di un'altra nello stesso giorno)
+                          const checkOutPren = getCheckOutForDay(day, app.id)
                           const checkInPren = prenotazioniGiorno.find(p => isCheckIn(day, p))
                           const hasTransition = checkOutPren && checkInPren && checkOutPren.id !== checkInPren.id
 
