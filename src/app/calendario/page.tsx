@@ -395,11 +395,11 @@ export default function CalendarioPage() {
                                       clipPath: 'polygon(100% 0, 100% 100%, 0 100%)'
                                     }}
                                   />
-                                  {/* Linea diagonale di separazione */}
+                                  {/* Linea diagonale di separazione - nera e spessa per visibilità */}
                                   <div
                                     className="absolute inset-0 pointer-events-none"
                                     style={{
-                                      background: 'linear-gradient(to bottom right, transparent calc(50% - 1px), white calc(50% - 1px), white calc(50% + 1px), transparent calc(50% + 1px))'
+                                      background: 'linear-gradient(to bottom right, transparent calc(50% - 2px), rgba(0,0,0,0.8) calc(50% - 2px), rgba(0,0,0,0.8) calc(50% + 2px), transparent calc(50% + 2px))'
                                     }}
                                   />
                                 </div>
@@ -541,6 +541,7 @@ export default function CalendarioPage() {
               <span className="w-5 h-5 relative overflow-hidden rounded">
                 <span className="absolute inset-0 bg-yellow-400" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
                 <span className="absolute inset-0 bg-green-500" style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }} />
+                <span className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(0,0,0,0.8) calc(50% - 1px), rgba(0,0,0,0.8) calc(50% + 1px), transparent calc(50% + 1px))' }} />
               </span>
               <span className="text-sm text-gray-600 dark:text-gray-300">Cambio ospite</span>
             </div>
