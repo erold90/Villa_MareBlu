@@ -1,19 +1,17 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { jsPDF } from 'jspdf'
 import Header from '@/components/layout/Header'
 import {
   Sparkles,
   Calendar,
   Plus,
   Check,
-  X,
-  AlertCircle,
   FileText,
   Loader2,
   ChevronLeft,
   ChevronRight,
-  Home,
   Clock,
   CalendarDays,
 } from 'lucide-react'
@@ -30,30 +28,21 @@ interface Pulizia {
   isAutomatic?: boolean
 }
 
-interface Suggerimento {
-  appartamentoId: number
-  data: string
-  giorniFermo: number
-  checkInData: string
-  motivo: string
-}
-
 interface PulizieData {
   pulizie: Pulizia[]
   puliziePerData: Record<string, Pulizia[]>
-  suggerimenti: Suggerimento[]
   stats: {
     totale: number
     daFare: number
     completate: number
-    suggerimenti: number
   }
   appartamenti: { id: number; nome: string }[]
   periodo: { da: string; a: string }
 }
 
 const tipoLabels: Record<string, string> = {
-  checkout: 'Check-out',
+  checkout: 'Cambio ospiti',
+  pre_checkin: 'Pre check-in',
   apertura_stagione: 'Apertura stagione',
   chiusura_stagione: 'Chiusura stagione',
   manuale: 'Manuale',
@@ -201,24 +190,6 @@ export default function PuliziePage() {
     }
   }
 
-  const accettaSuggerimento = async (sugg: Suggerimento) => {
-    try {
-      await fetch('/api/pulizie', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          appartamentoId: sugg.appartamentoId,
-          data: sugg.data,
-          tipo: 'suggerita',
-          note: sugg.motivo,
-        }),
-      })
-      fetchPulizie()
-    } catch (err) {
-      console.error('Errore:', err)
-    }
-  }
-
   const aggiungiPulizia = async () => {
     if (!nuovaPulizia.appartamentoId || !nuovaPulizia.data) return
 
@@ -242,13 +213,38 @@ export default function PuliziePage() {
     }
   }
 
-  const generaPDF = () => {
+  const generaPDF = useCallback(() => {
     if (!data) return
 
-    // Genera contenuto PDF
     const giorniSettimana = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica']
-    let contenuto = `PULIZIE - Villa MareBlu\n`
-    contenuto += `Settimana ${formatDate(inizioSettimana.toISOString())} - ${formatDate(fineSettimana.toISOString())}\n\n`
+
+    // Crea documento PDF
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    })
+
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const margin = 15
+    let y = 20
+
+    // Header
+    doc.setFontSize(18)
+    doc.setFont('helvetica', 'bold')
+    doc.text('PULIZIE - Villa MareBlu', pageWidth / 2, y, { align: 'center' })
+
+    y += 10
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'normal')
+    doc.text(
+      `Settimana: ${formatDate(inizioSettimana.toISOString())} - ${formatDate(fineSettimana.toISOString())}`,
+      pageWidth / 2,
+      y,
+      { align: 'center' }
+    )
+
+    y += 15
 
     // Per ogni giorno della settimana
     for (let i = 0; i < 7; i++) {
@@ -257,32 +253,82 @@ export default function PuliziePage() {
       const giornoKey = giorno.toISOString().split('T')[0]
       const pulizieGiorno = data.puliziePerData[giornoKey] || []
 
-      contenuto += `${giorniSettimana[i]} ${giorno.getDate()}/${giorno.getMonth() + 1}\n`
+      // Controlla se serve nuova pagina
+      if (y > 270) {
+        doc.addPage()
+        y = 20
+      }
+
+      // Giorno header
+      doc.setFillColor(240, 240, 240)
+      doc.rect(margin, y - 5, pageWidth - margin * 2, 8, 'F')
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.text(
+        `${giorniSettimana[i]} ${giorno.getDate()}/${giorno.getMonth() + 1}`,
+        margin + 2,
+        y
+      )
+      y += 8
 
       if (pulizieGiorno.length === 0) {
-        contenuto += `  Nessuna pulizia\n`
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'italic')
+        doc.setTextColor(150, 150, 150)
+        doc.text('Nessuna pulizia programmata', margin + 5, y)
+        doc.setTextColor(0, 0, 0)
+        y += 8
       } else {
         pulizieGiorno.forEach(p => {
-          const orario = p.orarioCheckout ? ` (ore ${p.orarioCheckout})` : ''
-          const tipo = p.tipo === 'apertura_stagione' ? ' - APERTURA' :
-            p.tipo === 'chiusura_stagione' ? ' - CHIUSURA' : ''
-          contenuto += `  [ ] App ${p.appartamentoId}${orario}${tipo}\n`
+          // Checkbox vuoto
+          doc.setDrawColor(100, 100, 100)
+          doc.rect(margin + 3, y - 3, 4, 4)
+
+          // Testo pulizia
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'normal')
+
+          let testo = `App ${p.appartamentoId}`
+          if (p.orarioCheckout) {
+            testo += ` - ore ${p.orarioCheckout}`
+          }
+
+          // Tipo pulizia
+          const tipoLabel = tipoLabels[p.tipo] || p.tipo
+          testo += ` (${tipoLabel})`
+
+          doc.text(testo, margin + 10, y)
+
+          // Note se presenti
+          if (p.note) {
+            y += 5
+            doc.setFontSize(9)
+            doc.setFont('helvetica', 'italic')
+            doc.setTextColor(100, 100, 100)
+            doc.text(`→ ${p.note}`, margin + 10, y)
+            doc.setTextColor(0, 0, 0)
+          }
+
+          y += 7
         })
       }
-      contenuto += `\n`
+
+      y += 5
     }
 
-    // Crea e scarica il file
-    const blob = new Blob([contenuto], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `pulizie_${inizioSettimana.toISOString().split('T')[0]}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
+    // Footer
+    doc.setFontSize(8)
+    doc.setTextColor(150, 150, 150)
+    doc.text(
+      `Generato il ${new Date().toLocaleDateString('it-IT')} alle ${new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`,
+      pageWidth / 2,
+      285,
+      { align: 'center' }
+    )
+
+    // Salva il PDF
+    doc.save(`pulizie_${inizioSettimana.toISOString().split('T')[0]}.pdf`)
+  }, [data, inizioSettimana, fineSettimana])
 
   if (loading) {
     return (
@@ -392,6 +438,10 @@ export default function PuliziePage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm text-center">
+            <p className="text-2xl font-bold text-blue-600">{data.stats.totale}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Totale</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm text-center">
             <p className="text-2xl font-bold text-amber-600">{data.stats.daFare}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Da fare</p>
           </div>
@@ -399,44 +449,8 @@ export default function PuliziePage() {
             <p className="text-2xl font-bold text-green-600">{data.stats.completate}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Completate</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm text-center">
-            <p className="text-2xl font-bold text-blue-600">{data.stats.suggerimenti}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Suggerimenti</p>
-          </div>
         </div>
 
-        {/* Suggerimenti */}
-        {data.suggerimenti.length > 0 && (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-              <h3 className="font-semibold text-amber-800 dark:text-amber-200">Suggerimenti ({data.suggerimenti.length})</h3>
-            </div>
-            <div className="space-y-2">
-              {data.suggerimenti.map((sugg, idx) => (
-                <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg p-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">App {sugg.appartamentoId}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Fermo da {sugg.giorniFermo} giorni - Check-in {formatDate(sugg.checkInData)}
-                    </p>
-                    <p className="text-sm text-amber-700 dark:text-amber-300">
-                      Consiglio: pulire il {formatDate(sugg.data)}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => accettaSuggerimento(sugg)}
-                      className="p-2 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-900"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Calendario settimana */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">

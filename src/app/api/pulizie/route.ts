@@ -3,8 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getDateStagione, getStagioneCorrente } from '@/lib/stagione'
 
 // Costanti configurazione
-const GIORNI_FERMO_SUGGERIMENTO = 7 // Suggerisci pulizia se appartamento fermo 7+ giorni
-const GIORNI_PRIMA_CHECKIN = 1 // Pulire 1 giorno prima del check-in (per appartamenti fermi)
+const NOTTI_FERMO_PULIZIA = 6 // Pulizia necessaria se appartamento fermo 6+ notti prima del check-in
 
 /**
  * Calcola le pulizie programmate e i suggerimenti
@@ -62,15 +61,18 @@ export async function GET(request: NextRequest) {
       pulizieMap.set(key, p)
     })
 
-    // Genera pulizie automatiche dai check-out
+    // Genera pulizie automatiche basate sulla logica:
+    // 1. Pulizia al check-out SE c'è un check-in lo stesso giorno (cambio ospiti)
+    // 2. Pulizia il giorno del check-in SE l'appartamento è fermo da 6+ notti
+    // 3. Pulizia apertura stagione (giorno prima del primo check-in)
+    // 4. Pulizia chiusura stagione (ultimo check-out)
     const pulizieAutomatiche: any[] = []
-    const suggerimenti: any[] = []
+    const suggerimenti: any[] = [] // Non più usati, ma manteniamo per compatibilità
 
     for (const app of appartamenti) {
       const prenotazioniApp = prenotazioni.filter(p => p.appartamentoId === app.id)
 
       // Trova primo check-in e ultimo check-out della stagione per questo appartamento
-      // Considera anche prenotazioni che iniziano fino a 2 settimane prima dell'inizio stagione
       const inizioStagioneEsteso = new Date(inizioStagione)
       inizioStagioneEsteso.setDate(inizioStagioneEsteso.getDate() - 14) // 14 giorni prima del 1 giugno
 
@@ -104,80 +106,130 @@ export async function GET(request: NextRequest) {
               tipo: 'apertura_stagione',
               stato: 'da_fare',
               orarioCheckout: null,
+              note: 'Preparazione appartamento per inizio stagione',
               isAutomatic: true,
             })
           }
         }
       }
 
-      // 2. Pulizie CHECK-OUT
-      for (const pren of prenotazioniApp) {
-        const dataCheckout = new Date(pren.checkOut)
-        dataCheckout.setHours(0, 0, 0, 0)
-
-        if (dataCheckout >= dataInizio && dataCheckout <= dataFine) {
-          const key = `${app.id}-${dataCheckout.toISOString().split('T')[0]}`
-          const puliziaEsistente = pulizieMap.get(key)
-
-          // Verifica se è l'ultimo check-out della stagione
-          const isChiusuraStagione = ultimoCheckOut &&
-            dataCheckout.toISOString().split('T')[0] === new Date(ultimoCheckOut).toISOString().split('T')[0]
-
-          if (!puliziaEsistente) {
-            pulizieAutomatiche.push({
-              id: `auto-checkout-${pren.id}`,
-              appartamentoId: app.id,
-              data: dataCheckout.toISOString(),
-              tipo: isChiusuraStagione ? 'chiusura_stagione' : 'checkout',
-              stato: 'da_fare',
-              orarioCheckout: '10:00', // Default, può essere personalizzato
-              prenotazioneId: pren.id,
-              isAutomatic: true,
-            })
-          }
-        }
-      }
-
-      // 3. SUGGERIMENTI per appartamenti fermi
-      // Trova periodi vuoti tra le prenotazioni
+      // Ordina le prenotazioni dell'appartamento per check-in
       const prenotazioniOrdinate = prenotazioniApp.sort(
         (a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime()
       )
 
+      // Analizza ogni prenotazione
       for (let i = 0; i < prenotazioniOrdinate.length; i++) {
         const pren = prenotazioniOrdinate[i]
         const prenPrecedente = i > 0 ? prenotazioniOrdinate[i - 1] : null
+        const prenSuccessiva = i < prenotazioniOrdinate.length - 1 ? prenotazioniOrdinate[i + 1] : null
 
-        if (prenPrecedente) {
-          const checkOutPrec = new Date(prenPrecedente.checkOut)
-          const checkInCorrente = new Date(pren.checkIn)
-          const giorniFermo = Math.floor(
-            (checkInCorrente.getTime() - checkOutPrec.getTime()) / (1000 * 60 * 60 * 24)
-          )
+        const dataCheckout = new Date(pren.checkOut)
+        dataCheckout.setHours(0, 0, 0, 0)
+        const dataCheckIn = new Date(pren.checkIn)
+        dataCheckIn.setHours(0, 0, 0, 0)
 
-          // Se fermo per più di 7 giorni, suggerisci pulizia 1 giorno prima del check-in
-          if (giorniFermo > GIORNI_FERMO_SUGGERIMENTO) {
-            const dataSuggerita = new Date(checkInCorrente)
-            dataSuggerita.setDate(dataSuggerita.getDate() - GIORNI_PRIMA_CHECKIN)
-            dataSuggerita.setHours(0, 0, 0, 0)
+        // Verifica se è l'ultimo check-out della stagione
+        const isChiusuraStagione = ultimoCheckOut &&
+          dataCheckout.toISOString().split('T')[0] === new Date(ultimoCheckOut).toISOString().split('T')[0]
 
-            if (dataSuggerita >= dataInizio && dataSuggerita <= dataFine) {
-              const key = `${app.id}-${dataSuggerita.toISOString().split('T')[0]}`
+        // CASO 1: Check-out con check-in lo stesso giorno (cambio ospiti)
+        if (prenSuccessiva) {
+          const checkInSuccessivo = new Date(prenSuccessiva.checkIn)
+          checkInSuccessivo.setHours(0, 0, 0, 0)
+
+          // Se il check-in successivo è lo stesso giorno del check-out
+          if (dataCheckout.getTime() === checkInSuccessivo.getTime()) {
+            if (dataCheckout >= dataInizio && dataCheckout <= dataFine) {
+              const key = `${app.id}-${dataCheckout.toISOString().split('T')[0]}`
               const puliziaEsistente = pulizieMap.get(key)
 
-              // Non suggerire se c'è già una pulizia quel giorno
-              if (!puliziaEsistente && !pulizieAutomatiche.find(p =>
-                p.appartamentoId === app.id &&
-                p.data.split('T')[0] === dataSuggerita.toISOString().split('T')[0]
-              )) {
-                suggerimenti.push({
+              if (!puliziaEsistente) {
+                pulizieAutomatiche.push({
+                  id: `auto-cambio-${pren.id}`,
                   appartamentoId: app.id,
-                  data: dataSuggerita.toISOString(),
-                  giorniFermo,
-                  checkInData: checkInCorrente.toISOString(),
-                  motivo: `App ${app.id} fermo da ${giorniFermo} giorni`,
+                  data: dataCheckout.toISOString(),
+                  tipo: 'checkout',
+                  stato: 'da_fare',
+                  orarioCheckout: '10:00',
+                  note: 'Cambio ospiti - check-in stesso giorno',
+                  prenotazioneId: pren.id,
+                  isAutomatic: true,
                 })
               }
+            }
+          }
+        }
+
+        // CASO 2: Check-in dopo appartamento fermo 6+ notti
+        if (prenPrecedente) {
+          const checkOutPrec = new Date(prenPrecedente.checkOut)
+          checkOutPrec.setHours(0, 0, 0, 0)
+
+          const nottiFermo = Math.floor(
+            (dataCheckIn.getTime() - checkOutPrec.getTime()) / (1000 * 60 * 60 * 24)
+          )
+
+          // Se fermo per 6+ notti, serve pulizia il giorno del check-in
+          if (nottiFermo >= NOTTI_FERMO_PULIZIA) {
+            if (dataCheckIn >= dataInizio && dataCheckIn <= dataFine) {
+              const key = `${app.id}-${dataCheckIn.toISOString().split('T')[0]}`
+              const puliziaEsistente = pulizieMap.get(key)
+
+              // Verifica che non ci sia già una pulizia per cambio ospiti quel giorno
+              const giaPuliziaCambio = pulizieAutomatiche.find(p =>
+                p.appartamentoId === app.id &&
+                p.data.split('T')[0] === dataCheckIn.toISOString().split('T')[0]
+              )
+
+              if (!puliziaEsistente && !giaPuliziaCambio) {
+                pulizieAutomatiche.push({
+                  id: `auto-fermo-${pren.id}`,
+                  appartamentoId: app.id,
+                  data: dataCheckIn.toISOString(),
+                  tipo: 'pre_checkin',
+                  stato: 'da_fare',
+                  orarioCheckout: null,
+                  note: `Appartamento fermo da ${nottiFermo} notti`,
+                  prenotazioneId: pren.id,
+                  isAutomatic: true,
+                })
+              }
+            }
+          }
+        } else {
+          // È la prima prenotazione - verifica distanza dall'apertura stagione
+          if (primoCheckIn) {
+            const dataApertura = new Date(primoCheckIn)
+            dataApertura.setDate(dataApertura.getDate() - 1)
+            // La pulizia apertura stagione è già gestita sopra
+          }
+        }
+
+        // CASO 3: Chiusura stagione (ultimo check-out)
+        if (isChiusuraStagione) {
+          if (dataCheckout >= dataInizio && dataCheckout <= dataFine) {
+            const key = `${app.id}-${dataCheckout.toISOString().split('T')[0]}`
+            const puliziaEsistente = pulizieMap.get(key)
+
+            // Verifica che non ci sia già una pulizia quel giorno
+            const giaPulizia = pulizieAutomatiche.find(p =>
+              p.appartamentoId === app.id &&
+              p.data.split('T')[0] === dataCheckout.toISOString().split('T')[0]
+            )
+
+            if (!puliziaEsistente && !giaPulizia) {
+              pulizieAutomatiche.push({
+                id: `auto-chiusura-${app.id}`,
+                appartamentoId: app.id,
+                data: dataCheckout.toISOString(),
+                tipo: 'chiusura_stagione',
+                stato: 'da_fare',
+                orarioCheckout: '10:00',
+                note: 'Chiusura stagione - ultimo check-out',
+                prenotazioneId: pren.id,
+                isAutomatic: true,
+              })
             }
           }
         }
