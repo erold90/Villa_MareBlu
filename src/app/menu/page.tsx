@@ -12,12 +12,14 @@ import {
   Moon,
   Sun,
   Download,
+  Bot,
 } from 'lucide-react'
 
 const menuItems = [
   {
     section: 'Gestione',
     items: [
+      { name: 'Assistente AI', href: '/assistente', icon: Bot, description: 'Chat con intelligenza artificiale' },
       { name: 'Ospiti', href: '/ospiti', icon: Users, description: 'Anagrafica ospiti' },
       { name: 'Analytics', href: '/analytics', icon: BarChart3, description: 'Statistiche e report' },
     ],

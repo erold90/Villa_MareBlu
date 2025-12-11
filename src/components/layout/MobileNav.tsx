@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   Calendar,
   Sparkles,
-  Bot,
+  BookOpen,
   Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -15,8 +15,8 @@ import { cn } from '@/lib/utils'
 const mobileNavigation = [
   { name: 'Home', href: '/', icon: LayoutDashboard },
   { name: 'Calendario', href: '/calendario', icon: Calendar },
+  { name: 'Prenotazioni', href: '/prenotazioni', icon: BookOpen },
   { name: 'Pulizie', href: '/pulizie', icon: Sparkles },
-  { name: 'Assistente', href: '/assistente', icon: Bot },
   { name: 'Menu', href: '/menu', icon: Menu },
 ]
 
