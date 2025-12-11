@@ -370,7 +370,7 @@ export default function CalendarioPage() {
                           // Verifica se c'è una transizione (check-out di una + check-in di un'altra nello stesso giorno)
                           const checkOutPren = getCheckOutForDay(day, app.id)
                           const checkInPren = prenotazioniGiorno.find(p => isCheckIn(day, p))
-                          const hasTransition = checkOutPren && checkInPren && checkOutPren.id !== checkInPren.id
+                          const hasTransition = !!(checkOutPren && checkInPren && checkOutPren.id !== checkInPren.id)
 
                           return (
                             <div
@@ -382,40 +382,31 @@ export default function CalendarioPage() {
                               )}
                             >
                               {hasTransition ? (
-                                // Giorno di transizione: mostra diagonale
-                                <div
-                                  className="absolute inset-x-0 top-2 bottom-2 cursor-pointer"
-                                  onClick={() => handlePrenotazioneClick(checkInPren)}
-                                  title={`Check-out: ${checkOutPren.ospiteCognome} → Check-in: ${checkInPren.ospiteCognome}`}
-                                >
-                                  {/* Metà superiore sinistra (check-out) */}
+                                // Giorno di transizione: due barre separate (check-out sopra, check-in sotto)
+                                <>
+                                  {/* Barra superiore - Check-out (chi esce) */}
                                   <div
+                                    onClick={() => handlePrenotazioneClick(checkOutPren)}
                                     className={cn(
-                                      'absolute inset-0',
+                                      'absolute top-1 left-0 right-0 h-[45%] flex items-center justify-end cursor-pointer hover:opacity-80 transition-all rounded-r-lg',
                                       getStatoColore(checkOutPren)
                                     )}
-                                    style={{
-                                      clipPath: 'polygon(0 0, 100% 0, 0 100%)'
-                                    }}
-                                  />
-                                  {/* Metà inferiore destra (check-in) */}
+                                    title={`CHECK-OUT: ${checkOutPren.ospiteCognome}`}
+                                  >
+                                    <span className="px-1 text-white text-[10px] font-bold">←</span>
+                                  </div>
+                                  {/* Barra inferiore - Check-in (chi entra) */}
                                   <div
+                                    onClick={() => handlePrenotazioneClick(checkInPren)}
                                     className={cn(
-                                      'absolute inset-0',
+                                      'absolute bottom-1 left-0 right-0 h-[45%] flex items-center cursor-pointer hover:opacity-80 transition-all rounded-l-lg',
                                       getStatoColore(checkInPren)
                                     )}
-                                    style={{
-                                      clipPath: 'polygon(100% 0, 100% 100%, 0 100%)'
-                                    }}
-                                  />
-                                  {/* Linea diagonale di separazione - nera e spessa per visibilità */}
-                                  <div
-                                    className="absolute inset-0 pointer-events-none"
-                                    style={{
-                                      background: 'linear-gradient(to bottom right, transparent calc(50% - 2px), rgba(0,0,0,0.8) calc(50% - 2px), rgba(0,0,0,0.8) calc(50% + 2px), transparent calc(50% + 2px))'
-                                    }}
-                                  />
-                                </div>
+                                    title={`CHECK-IN: ${checkInPren.ospiteCognome}`}
+                                  >
+                                    <span className="px-1 text-white text-[10px] font-bold">→</span>
+                                  </div>
+                                </>
                               ) : (
                                 // Giorno normale
                                 prenotazioniGiorno.map((pren) => {
@@ -551,10 +542,9 @@ export default function CalendarioPage() {
               <span className="text-sm text-gray-600 dark:text-gray-300">Cancellata</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 relative overflow-hidden rounded">
-                <span className="absolute inset-0 bg-yellow-400" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
-                <span className="absolute inset-0 bg-green-500" style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }} />
-                <span className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(0,0,0,0.8) calc(50% - 1px), rgba(0,0,0,0.8) calc(50% + 1px), transparent calc(50% + 1px))' }} />
+              <span className="w-5 h-6 relative overflow-hidden rounded flex flex-col gap-px">
+                <span className="flex-1 bg-yellow-400 rounded-r flex items-center justify-end px-0.5 text-white text-[8px]">←</span>
+                <span className="flex-1 bg-green-500 rounded-l flex items-center px-0.5 text-white text-[8px]">→</span>
               </span>
               <span className="text-sm text-gray-600 dark:text-gray-300">Cambio ospite</span>
             </div>
