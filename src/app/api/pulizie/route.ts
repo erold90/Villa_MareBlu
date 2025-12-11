@@ -6,14 +6,30 @@ import { getDateStagione, getStagioneCorrente } from '@/lib/stagione'
 const NOTTI_FERMO_PULIZIA = 6 // Pulizia necessaria se appartamento fermo 6+ notti prima del check-in
 
 /**
+ * Helper: Estrai solo la data (YYYY-MM-DD) ignorando timezone
+ */
+function toDateString(date: Date): string {
+  // Usa UTC per evitare problemi di timezone
+  return date.toISOString().split('T')[0]
+}
+
+/**
+ * Helper: Crea una data UTC da una stringa YYYY-MM-DD
+ */
+function fromDateString(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day))
+}
+
+/**
  * Helper: Ottieni il lunedì della settimana di una data
  */
 function getLunediSettimana(data: Date): Date {
-  const d = new Date(data)
-  d.setHours(0, 0, 0, 0)
-  const giorno = d.getDay()
+  const dateStr = toDateString(data)
+  const d = fromDateString(dateStr)
+  const giorno = d.getUTCDay()
   const diff = giorno === 0 ? -6 : 1 - giorno // Se domenica, vai indietro di 6 giorni
-  d.setDate(d.getDate() + diff)
+  d.setUTCDate(d.getUTCDate() + diff)
   return d
 }
 
@@ -23,7 +39,7 @@ function getLunediSettimana(data: Date): Date {
 function getDomenicaSettimana(data: Date): Date {
   const lunedi = getLunediSettimana(data)
   const domenica = new Date(lunedi)
-  domenica.setDate(lunedi.getDate() + 6)
+  domenica.setUTCDate(lunedi.getUTCDate() + 6)
   return domenica
 }
 
@@ -109,13 +125,13 @@ export async function GET(request: NextRequest) {
       const ultimoCheckOut = prenotazioniApp[prenotazioniApp.length - 1].checkOut
 
       // Pulizia APERTURA STAGIONE (1 giorno prima del primo check-in)
-      const dataApertura = new Date(primoCheckIn)
-      dataApertura.setDate(dataApertura.getDate() - 1)
-      dataApertura.setHours(0, 0, 0, 0)
+      const primoCheckInStr = toDateString(primoCheckIn)
+      const dataAperturaDate = fromDateString(primoCheckInStr)
+      dataAperturaDate.setUTCDate(dataAperturaDate.getUTCDate() - 1)
 
       pulizieRaw.push({
         appartamentoId: app.id,
-        checkOutDate: dataApertura,
+        checkOutDate: dataAperturaDate,
         hasCheckInSameDay: false,
         tipo: 'apertura_stagione',
         note: 'Preparazione inizio stagione',
@@ -126,19 +142,18 @@ export async function GET(request: NextRequest) {
       for (let i = 0; i < prenotazioniApp.length; i++) {
         const pren = prenotazioniApp[i]
         const prenSuccessiva = prenotazioniApp[i + 1]
-        const prenPrecedente = prenotazioniApp[i - 1]
 
-        const checkOut = new Date(pren.checkOut)
-        checkOut.setHours(0, 0, 0, 0)
-        const checkIn = new Date(pren.checkIn)
-        checkIn.setHours(0, 0, 0, 0)
+        // Usa stringhe per confrontare le date (evita problemi timezone)
+        const checkOutStr = toDateString(pren.checkOut)
+        const checkOut = fromDateString(checkOutStr)
+
+        const ultimoCheckOutStr = toDateString(ultimoCheckOut)
 
         // Verifica se c'è check-in lo stesso giorno del check-out
-        const hasCheckInSameDay = prenSuccessiva &&
-          new Date(prenSuccessiva.checkIn).toISOString().split('T')[0] === checkOut.toISOString().split('T')[0]
+        const hasCheckInSameDay = prenSuccessiva && toDateString(prenSuccessiva.checkIn) === checkOutStr
 
         // Verifica se è l'ultimo check-out (chiusura stagione)
-        const isChiusura = checkOut.toISOString().split('T')[0] === new Date(ultimoCheckOut).toISOString().split('T')[0]
+        const isChiusura = checkOutStr === ultimoCheckOutStr
 
         if (hasCheckInSameDay) {
           // CAMBIO OSPITI - NON flessibile, deve essere fatto quel giorno
@@ -146,7 +161,7 @@ export async function GET(request: NextRequest) {
             appartamentoId: app.id,
             checkOutDate: checkOut,
             hasCheckInSameDay: true,
-            checkInDate: new Date(prenSuccessiva.checkIn),
+            checkInDate: fromDateString(toDateString(prenSuccessiva.checkIn)),
             tipo: 'cambio_ospiti',
             note: 'Cambio ospiti stesso giorno',
             flessibile: false,
@@ -163,9 +178,11 @@ export async function GET(request: NextRequest) {
           })
         } else if (prenSuccessiva) {
           // C'è una prenotazione successiva ma NON lo stesso giorno
-          const checkInSucc = new Date(prenSuccessiva.checkIn)
-          checkInSucc.setHours(0, 0, 0, 0)
-          const giorniVuoti = Math.floor((checkInSucc.getTime() - checkOut.getTime()) / (1000 * 60 * 60 * 24))
+          const checkInSuccStr = toDateString(prenSuccessiva.checkIn)
+          const checkInSucc = fromDateString(checkInSuccStr)
+
+          // Calcola giorni vuoti tra check-out e check-in successivo
+          const giorniVuoti = Math.round((checkInSucc.getTime() - checkOut.getTime()) / (1000 * 60 * 60 * 24))
 
           if (giorniVuoti >= NOTTI_FERMO_PULIZIA) {
             // Appartamento fermo a lungo - pulizia il giorno del check-in successivo
