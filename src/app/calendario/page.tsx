@@ -52,9 +52,36 @@ const statoConfig: Record<string, { label: string; className: string }> = {
   cancelled: { label: 'Cancellata', className: 'bg-red-100 text-red-800' },
 }
 
-// Determina lo stato visivo basandosi su stato prenotazione + acconto pagato
+// Controlla se la prenotazione è completata (check-out passato)
+function isPrenotazioneCompletata(pren: Prenotazione): boolean {
+  const oggi = new Date()
+  oggi.setHours(0, 0, 0, 0)
+  const checkOut = new Date(pren.checkOut)
+  checkOut.setHours(0, 0, 0, 0)
+  return checkOut < oggi
+}
+
+// Controlla se l'ospite è attualmente in struttura (tra check-in e check-out)
+function isOspiteInStruttura(pren: Prenotazione): boolean {
+  const oggi = new Date()
+  oggi.setHours(0, 0, 0, 0)
+  const checkIn = new Date(pren.checkIn)
+  checkIn.setHours(0, 0, 0, 0)
+  const checkOut = new Date(pren.checkOut)
+  checkOut.setHours(0, 0, 0, 0)
+  return oggi >= checkIn && oggi < checkOut
+}
+
+// Determina lo stato visivo basandosi su stato prenotazione + acconto pagato + date
 function getStatoVisivo(pren: Prenotazione): { label: string; className: string } {
   if (pren.stato === 'cancelled') return statoConfig.cancelled
+
+  // Controlla automaticamente se completata in base alla data
+  if (isPrenotazioneCompletata(pren)) return statoConfig.completed
+
+  // Controlla se ospite attualmente in struttura
+  if (isOspiteInStruttura(pren)) return statoConfig.checkedin
+
   if (pren.stato === 'completed') return statoConfig.completed
   if (pren.stato === 'checkedin') return statoConfig.checkedin
 
@@ -65,9 +92,16 @@ function getStatoVisivo(pren: Prenotazione): { label: string; className: string 
   return { label: 'Confermata', className: 'bg-green-100 text-green-800' }
 }
 
-// Determina il colore della barra nel calendario (stato + acconto)
+// Determina il colore della barra nel calendario (stato + acconto + date)
 function getStatoColore(pren: Prenotazione): string {
   if (pren.stato === 'cancelled') return 'bg-red-400'
+
+  // Controlla automaticamente se completata in base alla data
+  if (isPrenotazioneCompletata(pren)) return 'bg-gray-400'
+
+  // Controlla se ospite attualmente in struttura
+  if (isOspiteInStruttura(pren)) return 'bg-blue-500'
+
   if (pren.stato === 'completed') return 'bg-gray-400'
   if (pren.stato === 'checkedin') return 'bg-blue-500'
 
@@ -448,10 +482,6 @@ export default function CalendarioPage() {
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-gray-400" />
               <span className="text-sm text-gray-600 dark:text-gray-300">Completata</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded bg-red-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-300">Cancellata</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 relative overflow-hidden rounded">
