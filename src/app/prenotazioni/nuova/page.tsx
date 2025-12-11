@@ -162,19 +162,40 @@ export default function NuovaPrenotazionePage() {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In production: save to database
-    console.log('Saving:', {
-      ...formData,
-      prezzi: {
-        ...prezziManuali,
-        totale: totaleFinale,
-        saldo: totaleFinale - prezziManuali.acconto,
-      },
-      calcolatiOriginali: calcolati
-    })
-    router.push('/prenotazioni')
+    setError(null)
+    setSaving(true)
+
+    try {
+      const response = await fetch('/api/prenotazioni', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          prezzi: {
+            ...prezziManuali,
+            totale: totaleFinale,
+            saldo: totaleFinale - prezziManuali.acconto,
+          },
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Errore nel salvataggio')
+      }
+
+      router.push('/prenotazioni')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Errore nel salvataggio')
+      setSaving(false)
+    }
   }
 
   return (
@@ -778,21 +799,39 @@ export default function NuovaPrenotazionePage() {
             </div>
           </div>
 
+          {/* Error message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3 justify-end">
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              disabled={saving}
+              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               Annulla
             </button>
             <button
               type="submit"
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={saving || formData.appartamentiIds.length === 0}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save className="w-5 h-5" />
-              Salva Prenotazione
+              {saving ? (
+                <>
+                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Salvataggio...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  Salva Prenotazione
+                </>
+              )}
             </button>
           </div>
         </form>

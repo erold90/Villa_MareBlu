@@ -1,6 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+
+    // Crea o trova l'ospite
+    let ospite = await prisma.ospite.findFirst({
+      where: {
+        nome: body.ospiteNome,
+        cognome: body.ospiteCognome,
+      },
+    })
+
+    if (!ospite) {
+      ospite = await prisma.ospite.create({
+        data: {
+          nome: body.ospiteNome,
+          cognome: body.ospiteCognome,
+          email: body.ospiteEmail || null,
+          telefono: body.ospiteTelefono || null,
+          nazione: body.ospiteNazione || 'Italia',
+        },
+      })
+    }
+
+    // Crea le prenotazioni per ogni appartamento selezionato
+    const prenotazioniCreate = []
+
+    for (const appartamentoId of body.appartamentiIds) {
+      const prenotazione = await prisma.prenotazione.create({
+        data: {
+          appartamentoId: appartamentoId,
+          ospiteId: ospite.id,
+          checkIn: new Date(body.checkIn),
+          checkOut: new Date(body.checkOut),
+          numAdulti: body.numAdulti || 2,
+          numBambini: body.numBambini || 0,
+          numNeonati: body.numNeonati || 0,
+          animali: body.animali || false,
+          animaliDettaglio: body.animaliDettaglio || null,
+          biancheria: body.biancheria || false,
+          bianchieriaSets: body.biancheria ? (body.numAdulti + body.numBambini) : 0,
+          biancheriaCosto: body.prezzi?.biancheriaCosto || 0,
+          prezzoSoggiorno: body.prezzi?.prezzoSoggiorno || 0,
+          prezzoExtra: body.prezzi?.extra || 0,
+          tassaSoggiorno: body.prezzi?.tassaSoggiorno || 0,
+          totale: body.prezzi?.totale || 0,
+          acconto: body.prezzi?.acconto || 0,
+          saldo: body.prezzi?.saldo || 0,
+          stato: 'confirmed',
+          fonte: body.fonte || 'direct',
+          fonteRiferimento: body.fonteRiferimento || null,
+          richiesteSpeciali: body.richiesteSpeciali || null,
+          noteInterne: body.noteInterne || null,
+        },
+        include: {
+          appartamento: true,
+          ospite: true,
+        },
+      })
+      prenotazioniCreate.push(prenotazione)
+    }
+
+    return NextResponse.json(prenotazioniCreate, { status: 201 })
+  } catch (error) {
+    console.error('Errore creazione prenotazione:', error)
+    return NextResponse.json(
+      { error: 'Errore nella creazione della prenotazione' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
