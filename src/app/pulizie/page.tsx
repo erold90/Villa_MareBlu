@@ -314,13 +314,13 @@ export default function PuliziePage() {
 
       <div className="p-4 lg:p-6 space-y-6">
         {/* Selettore stagione */}
-        <div className="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm">
-          <CalendarDays className="w-5 h-5 text-blue-600" />
-          <span className="font-medium text-gray-700">Stagione:</span>
+        <div className="flex items-center gap-4 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+          <CalendarDays className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <span className="font-medium text-gray-700 dark:text-gray-300">Stagione:</span>
           <select
             value={stagioneSelezionata}
             onChange={(e) => setStagioneSelezionata(parseInt(e.target.value))}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-semibold"
+            className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 font-semibold bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
           >
             {[2025, 2026, 2027].map(anno => (
               <option key={anno} value={anno}>
@@ -335,16 +335,16 @@ export default function PuliziePage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSettimanaOffset(s => s - 1)}
-              className="p-2 hover:bg-gray-100 rounded-lg"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
 
             <div className="text-center">
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-gray-900 dark:text-white">
                 {formatDate(inizioSettimana.toISOString())} - {formatDate(fineSettimana.toISOString())}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Stagione {stagioneSelezionata}
                 {settimanaOffset !== 0 && (
                   <span className="ml-2">
@@ -356,7 +356,7 @@ export default function PuliziePage() {
 
             <button
               onClick={() => setSettimanaOffset(s => s + 1)}
-              className="p-2 hover:bg-gray-100 rounded-lg"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -364,7 +364,7 @@ export default function PuliziePage() {
             {settimanaOffset !== 0 && (
               <button
                 onClick={() => setSettimanaOffset(0)}
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
               >
                 Inizio
               </button>
@@ -374,7 +374,7 @@ export default function PuliziePage() {
           <div className="flex items-center gap-3">
             <button
               onClick={generaPDF}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
             >
               <FileText className="w-4 h-4" />
               Genera PDF
@@ -391,43 +391,43 @@ export default function PuliziePage() {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm text-center">
             <p className="text-2xl font-bold text-amber-600">{data.stats.daFare}</p>
-            <p className="text-sm text-gray-500">Da fare</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Da fare</p>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm text-center">
             <p className="text-2xl font-bold text-green-600">{data.stats.completate}</p>
-            <p className="text-sm text-gray-500">Completate</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Completate</p>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm text-center">
             <p className="text-2xl font-bold text-blue-600">{data.stats.suggerimenti}</p>
-            <p className="text-sm text-gray-500">Suggerimenti</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Suggerimenti</p>
           </div>
         </div>
 
         {/* Suggerimenti */}
         {data.suggerimenti.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <AlertCircle className="w-5 h-5 text-amber-600" />
-              <h3 className="font-semibold text-amber-800">Suggerimenti ({data.suggerimenti.length})</h3>
+              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              <h3 className="font-semibold text-amber-800 dark:text-amber-200">Suggerimenti ({data.suggerimenti.length})</h3>
             </div>
             <div className="space-y-2">
               {data.suggerimenti.map((sugg, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-3 flex items-center justify-between">
+                <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg p-3 flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">App {sugg.appartamentoId}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-gray-900 dark:text-white">App {sugg.appartamentoId}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       Fermo da {sugg.giorniFermo} giorni - Check-in {formatDate(sugg.checkInData)}
                     </p>
-                    <p className="text-sm text-amber-700">
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
                       Consiglio: pulire il {formatDate(sugg.data)}
                     </p>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => accettaSuggerimento(sugg)}
-                      className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+                      className="p-2 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-900"
                     >
                       <Check className="w-4 h-4" />
                     </button>
@@ -439,8 +439,8 @@ export default function PuliziePage() {
         )}
 
         {/* Calendario settimana */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="grid grid-cols-7 border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+          <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
             {giorniSettimana.map((giorno, i) => {
               const data = new Date(inizioSettimana)
               data.setDate(inizioSettimana.getDate() + i)
@@ -451,20 +451,20 @@ export default function PuliziePage() {
                 <div
                   key={giorno}
                   className={cn(
-                    'p-3 text-center border-r border-gray-200 last:border-r-0',
-                    isOggi && 'bg-blue-50',
-                    isSabato && 'bg-amber-50'
+                    'p-3 text-center border-r border-gray-200 dark:border-gray-700 last:border-r-0',
+                    isOggi && 'bg-blue-50 dark:bg-blue-900/30',
+                    isSabato && 'bg-amber-50 dark:bg-amber-900/20'
                   )}
                 >
                   <p className={cn(
                     'text-sm font-medium',
-                    isOggi ? 'text-blue-600' : 'text-gray-600'
+                    isOggi ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'
                   )}>
                     {giorno}
                   </p>
                   <p className={cn(
                     'text-lg font-bold',
-                    isOggi ? 'text-blue-600' : 'text-gray-900'
+                    isOggi ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
                   )}>
                     {data.getDate()}
                   </p>
@@ -486,13 +486,13 @@ export default function PuliziePage() {
                 <div
                   key={i}
                   className={cn(
-                    'p-2 border-r border-gray-200 last:border-r-0 min-h-[200px]',
-                    isOggi && 'bg-blue-50/50',
-                    isSabato && 'bg-amber-50/50'
+                    'p-2 border-r border-gray-200 dark:border-gray-700 last:border-r-0 min-h-[200px]',
+                    isOggi && 'bg-blue-50/50 dark:bg-blue-900/20',
+                    isSabato && 'bg-amber-50/50 dark:bg-amber-900/10'
                   )}
                 >
                   {pulizieGiorno.length === 0 ? (
-                    <p className="text-xs text-gray-400 text-center mt-4">-</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-4">-</p>
                   ) : (
                     <div className="space-y-2">
                       {pulizieGiorno.map((pulizia, idx) => (
@@ -501,8 +501,8 @@ export default function PuliziePage() {
                           className={cn(
                             'rounded-lg p-2 text-sm cursor-pointer transition-opacity',
                             pulizia.stato === 'completata'
-                              ? 'bg-green-100 opacity-60'
-                              : 'bg-gray-100 hover:bg-gray-200'
+                              ? 'bg-green-100 dark:bg-green-900/40 opacity-60'
+                              : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
                           )}
                           onClick={() => togglePuliziaStato(pulizia)}
                         >
@@ -515,12 +515,12 @@ export default function PuliziePage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               {pulizia.orarioCheckout && (
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                   ore {pulizia.orarioCheckout}
                                 </p>
                               )}
                               {(pulizia.tipo === 'apertura_stagione' || pulizia.tipo === 'chiusura_stagione') && (
-                                <p className="text-xs font-medium text-amber-700">
+                                <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
                                   {pulizia.tipo === 'apertura_stagione' ? 'APERTURA' : 'CHIUSURA'}
                                 </p>
                               )}
@@ -540,14 +540,14 @@ export default function PuliziePage() {
         </div>
 
         {/* Lista dettagliata */}
-        <div className="bg-white rounded-xl shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">Dettaglio pulizie settimana</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Dettaglio pulizie settimana</h3>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {Object.entries(data.puliziePerData).length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <Sparkles className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                <Sparkles className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                 <p>Nessuna pulizia programmata per questa settimana</p>
               </div>
             ) : (
@@ -555,10 +555,10 @@ export default function PuliziePage() {
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map(([dataKey, pulizie]) => (
                   <div key={dataKey} className="p-4">
-                    <p className="font-medium text-gray-900 mb-3">
+                    <p className="font-medium text-gray-900 dark:text-white mb-3">
                       {formatDate(dataKey)}
                       {pulizie.length > 1 && (
-                        <span className="text-sm text-gray-500 ml-2">
+                        <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
                           ({pulizie.length} appartamenti)
                         </span>
                       )}
@@ -569,7 +569,7 @@ export default function PuliziePage() {
                           key={`${pulizia.id}-${idx}`}
                           className={cn(
                             'flex items-center gap-3 p-3 rounded-lg',
-                            pulizia.stato === 'completata' ? 'bg-green-50' : 'bg-gray-50'
+                            pulizia.stato === 'completata' ? 'bg-green-50 dark:bg-green-900/30' : 'bg-gray-50 dark:bg-gray-700'
                           )}
                         >
                           <button
@@ -578,7 +578,7 @@ export default function PuliziePage() {
                               'w-6 h-6 rounded-full border-2 flex items-center justify-center',
                               pulizia.stato === 'completata'
                                 ? 'bg-green-500 border-green-500'
-                                : 'border-gray-300 hover:border-blue-500'
+                                : 'border-gray-300 dark:border-gray-500 hover:border-blue-500'
                             )}
                           >
                             {pulizia.stato === 'completata' && (
@@ -596,18 +596,18 @@ export default function PuliziePage() {
                           <div className="flex-1">
                             <p className={cn(
                               'font-medium',
-                              pulizia.stato === 'completata' && 'line-through text-gray-500'
+                              pulizia.stato === 'completata' ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'
                             )}>
                               App {pulizia.appartamentoId}
                             </p>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                               {pulizia.orarioCheckout && (
                                 <span className="flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
                                   ore {pulizia.orarioCheckout}
                                 </span>
                               )}
-                              <span className="px-2 py-0.5 bg-gray-200 rounded-full text-xs">
+                              <span className="px-2 py-0.5 bg-gray-200 dark:bg-gray-600 rounded-full text-xs">
                                 {tipoLabels[pulizia.tipo] || pulizia.tipo}
                               </span>
                             </div>
@@ -625,18 +625,18 @@ export default function PuliziePage() {
       {/* Modal Aggiungi Pulizia */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-4">Aggiungi Pulizia</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Aggiungi Pulizia</h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Appartamento
                 </label>
                 <select
                   value={nuovaPulizia.appartamentoId}
                   onChange={(e) => setNuovaPulizia({ ...nuovaPulizia, appartamentoId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <option value="">Seleziona...</option>
                   {data.appartamenti.map(app => (
@@ -646,25 +646,25 @@ export default function PuliziePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Data
                 </label>
                 <input
                   type="date"
                   value={nuovaPulizia.data}
                   onChange={(e) => setNuovaPulizia({ ...nuovaPulizia, data: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Orario check-out (opzionale)
                 </label>
                 <select
                   value={nuovaPulizia.orarioCheckout}
                   onChange={(e) => setNuovaPulizia({ ...nuovaPulizia, orarioCheckout: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <option value="">Nessuno</option>
                   <option value="10:00">10:00</option>
@@ -673,14 +673,14 @@ export default function PuliziePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Note (opzionale)
                 </label>
                 <input
                   type="text"
                   value={nuovaPulizia.note}
                   onChange={(e) => setNuovaPulizia({ ...nuovaPulizia, note: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   placeholder="Es: Pulizia straordinaria"
                 />
               </div>
@@ -689,7 +689,7 @@ export default function PuliziePage() {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
               >
                 Annulla
               </button>

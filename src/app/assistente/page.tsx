@@ -220,14 +220,14 @@ export default function AssistentePage() {
         // Headers
         if (line.startsWith('## ')) {
           return (
-            <h2 key={i} className="text-lg font-bold mt-4 mb-2 text-gray-900">
+            <h2 key={i} className="text-lg font-bold mt-4 mb-2 text-gray-900 dark:text-white">
               {line.replace('## ', '')}
             </h2>
           )
         }
         if (line.startsWith('### ')) {
           return (
-            <h3 key={i} className="text-base font-semibold mt-3 mb-1 text-gray-800">
+            <h3 key={i} className="text-base font-semibold mt-3 mb-1 text-gray-800 dark:text-gray-100">
               {line.replace('### ', '')}
             </h3>
           )
@@ -267,7 +267,7 @@ export default function AssistentePage() {
         }
         // Horizontal rule
         if (line === '---') {
-          return <hr key={i} className="my-4 border-gray-200" />
+          return <hr key={i} className="my-4 border-gray-200 dark:border-gray-600" />
         }
         // Empty line
         if (!line.trim()) {
@@ -296,10 +296,10 @@ export default function AssistentePage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Sparkles className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   Ciao! Sono il tuo assistente
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   Posso aiutarti a gestire le prenotazioni, calcolare preventivi e rispondere ai
                   clienti. Incolla il messaggio di un cliente o chiedi quello che ti serve!
                 </p>
@@ -307,7 +307,7 @@ export default function AssistentePage() {
 
               {/* Quick Suggestions */}
               <div className="space-y-3">
-                <p className="text-sm font-medium text-gray-500 text-center">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 text-center">
                   Prova con questi esempi:
                 </p>
                 <div className="grid gap-3">
@@ -315,15 +315,15 @@ export default function AssistentePage() {
                     <button
                       key={i}
                       onClick={() => sendMessage(sug.testo)}
-                      className="text-left p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all group"
+                      className="text-left p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all group"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                          <MessageSquare className="w-4 h-4 text-blue-600" />
+                        <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
+                          <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{sug.titolo}</p>
-                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{sug.testo}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{sug.titolo}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{sug.testo}</p>
                         </div>
                       </div>
                     </button>
@@ -370,11 +370,11 @@ export default function AssistentePage() {
                         'inline-block rounded-2xl px-4 py-3 text-left',
                         message.role === 'user'
                           ? 'bg-blue-600 text-white rounded-tr-md'
-                          : 'bg-white border border-gray-200 rounded-tl-md shadow-sm'
+                          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-tl-md shadow-sm'
                       )}
                     >
                       {message.role === 'assistant' ? (
-                        <div className="text-gray-700 text-sm leading-relaxed">
+                        <div className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed">
                           {formatMessageContent(message.content)}
                         </div>
                       ) : (
@@ -385,7 +385,7 @@ export default function AssistentePage() {
                     {/* Azioni proposte dall'AI */}
                     {message.role === 'assistant' && message.azioni && message.azioni.length > 0 && (
                       <div className="mt-3 space-y-2">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                           Azioni disponibili:
                         </p>
                         {message.azioni.map((azione, idx) => {
@@ -395,34 +395,34 @@ export default function AssistentePage() {
                               key={idx}
                               className={cn(
                                 "p-3 rounded-lg border",
-                                stato === 'success' ? 'bg-green-50 border-green-200' :
-                                stato === 'error' ? 'bg-red-50 border-red-200' :
-                                'bg-blue-50 border-blue-200'
+                                stato === 'success' ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800' :
+                                stato === 'error' ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800' :
+                                'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800'
                               )}
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className="text-lg">{getIconaAzione(azione.tipo)}</span>
-                                    <span className="font-medium text-gray-900">
+                                    <span className="font-medium text-gray-900 dark:text-white">
                                       {getLabelAzione(azione.tipo)}
                                     </span>
                                   </div>
-                                  <p className="text-sm text-gray-600">{azione.riepilogo}</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">{azione.riepilogo}</p>
                                 </div>
                                 <div className="flex-shrink-0">
                                   {stato === 'pending' ? (
-                                    <div className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-sm flex items-center gap-2">
+                                    <div className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded-lg text-sm flex items-center gap-2">
                                       <Loader2 className="w-4 h-4 animate-spin" />
                                       Esecuzione...
                                     </div>
                                   ) : stato === 'success' ? (
-                                    <div className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm flex items-center gap-2">
+                                    <div className="px-3 py-1.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg text-sm flex items-center gap-2">
                                       <CheckCircle className="w-4 h-4" />
                                       Completato
                                     </div>
                                   ) : stato === 'error' ? (
-                                    <div className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm flex items-center gap-2">
+                                    <div className="px-3 py-1.5 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg text-sm flex items-center gap-2">
                                       <XCircle className="w-4 h-4" />
                                       Errore
                                     </div>
@@ -447,7 +447,7 @@ export default function AssistentePage() {
                     {message.role === 'assistant' && (
                       <button
                         onClick={() => copyToClipboard(message.content, message.id)}
-                        className="mt-2 text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+                        className="mt-2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex items-center gap-1"
                       >
                         {copiedId === message.id ? (
                           <>
@@ -472,8 +472,8 @@ export default function AssistentePage() {
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
-                  <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
-                    <div className="flex items-center gap-2 text-gray-500">
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span className="text-sm">Sto pensando...</span>
                     </div>
@@ -487,7 +487,7 @@ export default function AssistentePage() {
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 bg-white p-4">
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
           <div className="max-w-3xl mx-auto">
             {messages.length > 0 && (
               <div className="flex justify-end mb-2">
@@ -510,7 +510,7 @@ export default function AssistentePage() {
                   onKeyDown={handleKeyDown}
                   placeholder="Incolla il messaggio di un cliente o scrivi la tua richiesta..."
                   rows={1}
-                  className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                   disabled={isLoading}
                 />
               </div>
@@ -521,7 +521,7 @@ export default function AssistentePage() {
                   'px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-2',
                   input.trim() && !isLoading
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                 )}
               >
                 {isLoading ? (
@@ -532,7 +532,7 @@ export default function AssistentePage() {
               </button>
             </form>
 
-            <p className="text-xs text-gray-400 text-center mt-3">
+            <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-3">
               Premi Invio per inviare, Shift+Invio per andare a capo
             </p>
           </div>

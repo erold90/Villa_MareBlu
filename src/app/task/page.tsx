@@ -162,21 +162,21 @@ export default function TaskPage() {
             onClick={() => setFilterStato(filterStato === 'pending' ? 'all' : 'pending')}
             className={cn(
               'p-4 rounded-xl text-center transition-colors',
-              filterStato === 'pending' ? 'bg-amber-100 ring-2 ring-amber-500' : 'bg-white shadow-sm hover:bg-gray-50'
+              filterStato === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30 ring-2 ring-amber-500' : 'bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700'
             )}
           >
             <p className="text-2xl font-bold text-amber-600">{counts.pending}</p>
-            <p className="text-sm text-gray-500">Da fare</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Da fare</p>
           </button>
           <button
             onClick={() => setFilterStato(filterStato === 'in_progress' ? 'all' : 'in_progress')}
             className={cn(
               'p-4 rounded-xl text-center transition-colors',
-              filterStato === 'in_progress' ? 'bg-blue-100 ring-2 ring-blue-500' : 'bg-white shadow-sm hover:bg-gray-50'
+              filterStato === 'in_progress' ? 'bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500' : 'bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700'
             )}
           >
             <p className="text-2xl font-bold text-blue-600">{counts.inProgress}</p>
-            <p className="text-sm text-gray-500">In corso</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">In corso</p>
           </button>
           <button
             onClick={() => {
@@ -185,21 +185,21 @@ export default function TaskPage() {
             }}
             className={cn(
               'p-4 rounded-xl text-center transition-colors',
-              filterStato === 'completed' ? 'bg-green-100 ring-2 ring-green-500' : 'bg-white shadow-sm hover:bg-gray-50'
+              filterStato === 'completed' ? 'bg-green-100 dark:bg-green-900/30 ring-2 ring-green-500' : 'bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700'
             )}
           >
             <p className="text-2xl font-bold text-green-600">{counts.completed}</p>
-            <p className="text-sm text-gray-500">Completate</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Completate</p>
           </button>
         </div>
 
         {/* Avviso task scaduti */}
         {counts.overdue > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-xl p-4 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-red-900">{counts.overdue} task scadut{counts.overdue === 1 ? 'o' : 'i'}</p>
-              <p className="text-sm text-red-700 mt-1">
+              <p className="font-medium text-red-900 dark:text-red-200">{counts.overdue} task scadut{counts.overdue === 1 ? 'o' : 'i'}</p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
                 Ci sono task con scadenza superata che richiedono attenzione.
               </p>
             </div>
@@ -207,16 +207,16 @@ export default function TaskPage() {
         )}
 
         {/* Controls */}
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             {/* Category Filter */}
             <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
-              <Filter className="w-4 h-4 text-gray-500 flex-shrink-0" />
+              <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
               <button
                 onClick={() => setFilterCategoria('all')}
                 className={cn(
                   'px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors',
-                  filterCategoria === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  filterCategoria === 'all' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 )}
               >
                 Tutte
@@ -227,7 +227,7 @@ export default function TaskPage() {
                   onClick={() => setFilterCategoria(filterCategoria === key ? 'all' : key)}
                   className={cn(
                     'px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors',
-                    filterCategoria === key ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    filterCategoria === key ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   )}
                 >
                   {config.label}
@@ -236,12 +236,12 @@ export default function TaskPage() {
             </div>
 
             {/* Toggle completati */}
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
               <input
                 type="checkbox"
                 checked={mostraCompletati}
                 onChange={(e) => setMostraCompletati(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
               />
               Mostra completati
             </label>
@@ -266,10 +266,10 @@ export default function TaskPage() {
 
         {/* Messaggio se non ci sono task */}
         {tasks.length === 0 && (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 text-center">
             <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-            <h3 className="font-semibold text-gray-900 mb-1">Nessun task attivo</h3>
-            <p className="text-gray-500">Non ci sono task da completare al momento.</p>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Nessun task attivo</h3>
+            <p className="text-gray-500 dark:text-gray-400">Non ci sono task da completare al momento.</p>
           </div>
         )}
 
@@ -286,7 +286,7 @@ export default function TaskPage() {
                 <div
                   key={task.id}
                   className={cn(
-                    'bg-white rounded-xl shadow-sm p-4 transition-opacity',
+                    'bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-opacity',
                     isCompleted && 'opacity-60'
                   )}
                 >
@@ -298,7 +298,7 @@ export default function TaskPage() {
                         'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors',
                         isCompleted
                           ? 'bg-green-500 border-green-500'
-                          : 'border-gray-300 hover:border-blue-500'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-blue-500'
                       )}
                     >
                       {isCompleted && <CheckCircle2 className="w-4 h-4 text-white" />}
@@ -309,16 +309,16 @@ export default function TaskPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <h3 className={cn(
-                            'font-medium text-gray-900',
+                            'font-medium text-gray-900 dark:text-white',
                             isCompleted && 'line-through'
                           )}>
                             {task.titolo}
                           </h3>
                           {task.descrizione && (
-                            <p className="text-sm text-gray-500 mt-1">{task.descrizione}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{task.descrizione}</p>
                           )}
                         </div>
-                        <button className="p-1 text-gray-400 hover:text-gray-600">
+                        <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                           <MoreVertical className="w-4 h-4" />
                         </button>
                       </div>
@@ -334,7 +334,7 @@ export default function TaskPage() {
                         </span>
 
                         {/* Category */}
-                        <span className="flex items-center gap-1 text-xs text-gray-500">
+                        <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                           <CategoriaIcon className={cn('w-3 h-3', categoria.color)} />
                           {categoria.label}
                         </span>
@@ -353,7 +353,7 @@ export default function TaskPage() {
                         {task.scadenza && (
                           <span className={cn(
                             'flex items-center gap-1 text-xs',
-                            task.isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'
+                            task.isOverdue ? 'text-red-600 font-medium' : 'text-gray-500 dark:text-gray-400'
                           )}>
                             <Calendar className="w-3 h-3" />
                             {task.isOverdue && 'Scaduto: '}
@@ -378,10 +378,10 @@ export default function TaskPage() {
         )}
 
         {filteredTasks.length === 0 && tasks.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 text-center">
             <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-            <h3 className="font-semibold text-gray-900 mb-1">Nessun task</h3>
-            <p className="text-gray-500">Non ci sono task che corrispondono ai filtri selezionati</p>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Nessun task</h3>
+            <p className="text-gray-500 dark:text-gray-400">Non ci sono task che corrispondono ai filtri selezionati</p>
           </div>
         )}
       </div>

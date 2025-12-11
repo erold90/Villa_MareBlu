@@ -206,42 +206,42 @@ export default function CalendarioPage() {
 
       <div className="p-4 lg:p-6 space-y-4">
         {/* Controls */}
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
           <div className="flex flex-col lg:flex-row lg:items-center gap-4">
             {/* Month Navigation */}
             <div className="flex items-center gap-2">
               <button
                 onClick={prevMonth}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={goToToday}
-                className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
               >
                 Oggi
               </button>
               <button
                 onClick={nextMonth}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
-              <span className="ml-2 font-semibold text-gray-900">
+              <span className="ml-2 font-semibold text-gray-900 dark:text-white">
                 {getMonthName(month)} {year}
               </span>
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
               <button
                 onClick={() => setViewMode('timeline')}
                 className={cn(
                   'px-4 py-2 text-sm font-medium rounded-md transition-colors',
                   viewMode === 'timeline'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                 )}
               >
                 Timeline
@@ -251,8 +251,8 @@ export default function CalendarioPage() {
                 className={cn(
                   'px-4 py-2 text-sm font-medium rounded-md transition-colors',
                   viewMode === 'month'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                 )}
               >
                 Mese
@@ -287,19 +287,19 @@ export default function CalendarioPage() {
 
         {/* Loading State */}
         {loading && (
-          <div className="flex items-center justify-center h-64 bg-white rounded-xl shadow-sm">
+          <div className="flex items-center justify-center h-64 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           </div>
         )}
 
         {/* Timeline View */}
         {!loading && viewMode === 'timeline' && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <div className="min-w-[1200px]">
                 {/* Header with days */}
-                <div className="flex border-b border-gray-200 sticky top-0 bg-white z-10">
-                  <div className="w-32 lg:w-40 flex-shrink-0 p-3 border-r border-gray-200 bg-gray-50 font-semibold text-gray-700">
+                <div className="flex border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
+                  <div className="w-32 lg:w-40 flex-shrink-0 p-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 font-semibold text-gray-700 dark:text-gray-200">
                     Appartamento
                   </div>
                   <div className="flex flex-1">
@@ -311,15 +311,15 @@ export default function CalendarioPage() {
                         <div
                           key={day}
                           className={cn(
-                            'flex-1 min-w-[40px] p-2 text-center border-r border-gray-100 last:border-r-0',
-                            isWeekend && 'bg-gray-50',
-                            isTodayDate && 'bg-blue-50'
+                            'flex-1 min-w-[40px] p-2 text-center border-r border-gray-100 dark:border-gray-700 last:border-r-0',
+                            isWeekend && 'bg-gray-50 dark:bg-gray-700/50',
+                            isTodayDate && 'bg-blue-50 dark:bg-blue-900/30'
                           )}
                         >
-                          <p className="text-xs text-gray-500">{getDayName(date.getDay())}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{getDayName(date.getDay())}</p>
                           <p className={cn(
                             'text-sm font-semibold',
-                            isTodayDate ? 'text-blue-600' : 'text-gray-900'
+                            isTodayDate ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
                           )}>
                             {day}
                           </p>
@@ -333,8 +333,8 @@ export default function CalendarioPage() {
                 {appartamentiConfig
                   .filter((app) => selectedAppartamenti.includes(app.id))
                   .map((app) => (
-                    <div key={app.id} className="flex border-b border-gray-100 last:border-b-0">
-                      <div className="w-32 lg:w-40 flex-shrink-0 p-3 border-r border-gray-200 bg-gray-50">
+                    <div key={app.id} className="flex border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                      <div className="w-32 lg:w-40 flex-shrink-0 p-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                         <div className="flex items-center gap-2">
                           <div
                             className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-semibold text-sm"
@@ -343,8 +343,8 @@ export default function CalendarioPage() {
                             {app.id}
                           </div>
                           <div className="hidden lg:block">
-                            <p className="font-medium text-gray-900 text-sm">{app.nome}</p>
-                            <p className="text-xs text-gray-500">{app.postiLetto} posti</p>
+                            <p className="font-medium text-gray-900 dark:text-white text-sm">{app.nome}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{app.postiLetto} posti</p>
                           </div>
                         </div>
                       </div>
@@ -357,9 +357,9 @@ export default function CalendarioPage() {
                             <div
                               key={day}
                               className={cn(
-                                'flex-1 min-w-[40px] border-r border-gray-100 last:border-r-0 relative',
-                                isWeekend && 'bg-gray-50/50',
-                                isToday(date) && 'bg-blue-50/50'
+                                'flex-1 min-w-[40px] border-r border-gray-100 dark:border-gray-700 last:border-r-0 relative',
+                                isWeekend && 'bg-gray-50/50 dark:bg-gray-700/30',
+                                isToday(date) && 'bg-blue-50/50 dark:bg-blue-900/20'
                               )}
                             >
                               {prenotazioniGiorno.map((pren) => (
@@ -392,11 +392,11 @@ export default function CalendarioPage() {
 
         {/* Month View */}
         {!loading && viewMode === 'month' && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
             {/* Days Header */}
-            <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
+            <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
               {['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map((day) => (
-                <div key={day} className="p-3 text-center text-sm font-semibold text-gray-700">
+                <div key={day} className="p-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-200">
                   {day}
                 </div>
               ))}
@@ -406,7 +406,7 @@ export default function CalendarioPage() {
             <div className="grid grid-cols-7">
               {/* Empty cells for days before month starts */}
               {Array.from({ length: firstDay }).map((_, i) => (
-                <div key={`empty-${i}`} className="min-h-[100px] p-2 bg-gray-50/50 border-b border-r border-gray-100" />
+                <div key={`empty-${i}`} className="min-h-[100px] p-2 bg-gray-50/50 dark:bg-gray-700/30 border-b border-r border-gray-100 dark:border-gray-700" />
               ))}
 
               {/* Days of the month */}
@@ -426,14 +426,14 @@ export default function CalendarioPage() {
                   <div
                     key={day}
                     className={cn(
-                      'min-h-[100px] p-2 border-b border-r border-gray-100',
-                      isTodayDate && 'bg-blue-50'
+                      'min-h-[100px] p-2 border-b border-r border-gray-100 dark:border-gray-700',
+                      isTodayDate && 'bg-blue-50 dark:bg-blue-900/30'
                     )}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className={cn(
                         'w-7 h-7 flex items-center justify-center rounded-full text-sm font-semibold',
-                        isTodayDate ? 'bg-blue-600 text-white' : 'text-gray-900'
+                        isTodayDate ? 'bg-blue-600 text-white' : 'text-gray-900 dark:text-white'
                       )}>
                         {day}
                       </span>
@@ -452,7 +452,7 @@ export default function CalendarioPage() {
                         </div>
                       ))}
                       {allPrenotazioni.length > 3 && (
-                        <div className="text-xs text-gray-500 pl-2">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 pl-2">
                           +{allPrenotazioni.length - 3} altri
                         </div>
                       )}
@@ -465,28 +465,28 @@ export default function CalendarioPage() {
         )}
 
         {/* Legend */}
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <h4 className="text-sm font-semibold text-gray-700 mb-3">Legenda</h4>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Legenda</h4>
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-yellow-400" />
-              <span className="text-sm text-gray-600">In attesa</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">In attesa</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-green-500" />
-              <span className="text-sm text-gray-600">Confermata</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Confermata</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-blue-500" />
-              <span className="text-sm text-gray-600">Check-in</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Check-in</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-gray-400" />
-              <span className="text-sm text-gray-600">Completata</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Completata</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded bg-red-400" />
-              <span className="text-sm text-gray-600">Cancellata</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Cancellata</span>
             </div>
           </div>
         </div>

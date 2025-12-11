@@ -251,7 +251,7 @@ export default function PrenotazioniPage() {
 
       <div className="p-4 lg:p-6 space-y-4">
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="relative flex-1">
@@ -261,7 +261,7 @@ export default function PrenotazioniPage() {
                 placeholder="Cerca per nome o email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
 
@@ -270,7 +270,7 @@ export default function PrenotazioniPage() {
               <select
                 value={filterStagione}
                 onChange={(e) => setFilterStagione(e.target.value)}
-                className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
+                className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
               >
                 <option value="future">Attuali e future</option>
                 {stagioni.map((anno) => (
@@ -284,7 +284,7 @@ export default function PrenotazioniPage() {
               <select
                 value={filterStato}
                 onChange={(e) => setFilterStato(e.target.value)}
-                className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
               >
                 <option value="all">Tutti gli stati</option>
                 <option value="pending">In attesa</option>
@@ -297,7 +297,7 @@ export default function PrenotazioniPage() {
               <select
                 value={filterAppartamento}
                 onChange={(e) => setFilterAppartamento(e.target.value)}
-                className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
               >
                 <option value="all">Tutti gli appartamenti</option>
                 {appartamentiConfig.map((app) => (
@@ -314,7 +314,7 @@ export default function PrenotazioniPage() {
         <div className="lg:hidden space-y-4">
           {filteredPrenotazioni.map((pren) => {
             return (
-              <div key={pren.id} className="bg-white rounded-xl shadow-sm p-4">
+              <div key={pren.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div
@@ -324,10 +324,10 @@ export default function PrenotazioniPage() {
                       {pren.appartamentoId}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-gray-900 dark:text-white">
                         {pren.ospite.cognome} {pren.ospite.nome}
                       </p>
-                      <p className="text-sm text-gray-500">{pren.appartamento.nome}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{pren.appartamento.nome}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -338,26 +338,26 @@ export default function PrenotazioniPage() {
 
                 <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
                   <div>
-                    <p className="text-gray-500">Check-in</p>
-                    <p className="font-medium">{formatDate(pren.checkIn)}</p>
+                    <p className="text-gray-500 dark:text-gray-400">Check-in</p>
+                    <p className="font-medium dark:text-white">{formatDate(pren.checkIn)}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Check-out</p>
-                    <p className="font-medium">{formatDate(pren.checkOut)}</p>
+                    <p className="text-gray-500 dark:text-gray-400">Check-out</p>
+                    <p className="font-medium dark:text-white">{formatDate(pren.checkOut)}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Ospiti</p>
-                    <p className="font-medium">
+                    <p className="text-gray-500 dark:text-gray-400">Ospiti</p>
+                    <p className="font-medium dark:text-white">
                       {pren.numAdulti} adulti{pren.numBambini > 0 && `, ${pren.numBambini} bambini`}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Totale</p>
-                    <p className="font-bold text-gray-900">{formatPrice(pren.totale)}</p>
+                    <p className="text-gray-500 dark:text-gray-400">Totale</p>
+                    <p className="font-bold text-gray-900 dark:text-white">{formatPrice(pren.totale)}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
                   <div className="flex items-center gap-2">
                     <span className={cn('text-xs px-2 py-1 rounded-full font-medium', getStatoVisivo(pren).className)}>
                       {getStatoVisivo(pren).label}
@@ -369,19 +369,19 @@ export default function PrenotazioniPage() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleView(pren)}
-                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleEdit(pren)}
-                      className="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg"
+                      className="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteClick(pren)}
-                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -393,30 +393,30 @@ export default function PrenotazioniPage() {
         </div>
 
         {/* Prenotazioni Table - Desktop */}
-        <div className="hidden lg:block bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left p-4 text-sm font-semibold text-gray-900">Ospite</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-900">Appartamento</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-900">Date</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-900">Ospiti</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-900">Extra</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-900">Pagamento</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-900">Stato</th>
-                  <th className="text-right p-4 text-sm font-semibold text-gray-900">Azioni</th>
+                <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                  <th className="text-left p-4 text-sm font-semibold text-gray-900 dark:text-white">Ospite</th>
+                  <th className="text-left p-4 text-sm font-semibold text-gray-900 dark:text-white">Appartamento</th>
+                  <th className="text-left p-4 text-sm font-semibold text-gray-900 dark:text-white">Date</th>
+                  <th className="text-left p-4 text-sm font-semibold text-gray-900 dark:text-white">Ospiti</th>
+                  <th className="text-left p-4 text-sm font-semibold text-gray-900 dark:text-white">Extra</th>
+                  <th className="text-left p-4 text-sm font-semibold text-gray-900 dark:text-white">Pagamento</th>
+                  <th className="text-left p-4 text-sm font-semibold text-gray-900 dark:text-white">Stato</th>
+                  <th className="text-right p-4 text-sm font-semibold text-gray-900 dark:text-white">Azioni</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filteredPrenotazioni.map((pren) => {
                   return (
-                    <tr key={pren.id} className="hover:bg-gray-50">
+                    <tr key={pren.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="p-4">
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-gray-900 dark:text-white">
                           {pren.ospite.cognome} {pren.ospite.nome}
                         </p>
-                        <p className="text-sm text-gray-500">{pren.ospite.nazione || ''}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{pren.ospite.nazione || ''}</p>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
@@ -426,29 +426,29 @@ export default function PrenotazioniPage() {
                           >
                             {pren.appartamentoId}
                           </div>
-                          <span className="text-gray-700">{pren.appartamento.nome}</span>
+                          <span className="text-gray-700 dark:text-gray-300">{pren.appartamento.nome}</span>
                         </div>
                       </td>
                       <td className="p-4">
-                        <p className="text-gray-700">{formatDate(pren.checkIn)}</p>
-                        <p className="text-sm text-gray-500">{formatDate(pren.checkOut)}</p>
+                        <p className="text-gray-700 dark:text-gray-300">{formatDate(pren.checkIn)}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(pren.checkOut)}</p>
                       </td>
                       <td className="p-4">
-                        <p className="text-gray-700">{pren.numAdulti} adulti</p>
+                        <p className="text-gray-700 dark:text-gray-300">{pren.numAdulti} adulti</p>
                         {pren.numBambini > 0 && (
-                          <p className="text-sm text-gray-500">{pren.numBambini} bambini</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{pren.numBambini} bambini</p>
                         )}
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           {pren.animali && (
-                            <span className="flex items-center gap-1 text-xs px-2 py-1 bg-amber-50 text-amber-700 rounded-full">
+                            <span className="flex items-center gap-1 text-xs px-2 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full">
                               <Dog className="w-3 h-3" />
                               Si
                             </span>
                           )}
                           {pren.biancheria && (
-                            <span className="flex items-center gap-1 text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
+                            <span className="flex items-center gap-1 text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
                               <Bed className="w-3 h-3" />
                               {formatPrice(pren.biancheriaCosto)}
                             </span>
@@ -456,7 +456,7 @@ export default function PrenotazioniPage() {
                         </div>
                       </td>
                       <td className="p-4">
-                        <p className="font-semibold text-gray-900">{formatPrice(pren.totale)}</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{formatPrice(pren.totale)}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className={cn(
                             'text-xs',
@@ -488,21 +488,21 @@ export default function PrenotazioniPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => handleView(pren)}
-                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                             title="Visualizza dettaglio"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEdit(pren)}
-                            className="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
                             title="Modifica"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(pren)}
-                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                             title="Elimina"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -517,7 +517,7 @@ export default function PrenotazioniPage() {
           </div>
 
           {filteredPrenotazioni.length === 0 && (
-            <div className="p-8 text-center text-gray-500">Nessuna prenotazione trovata</div>
+            <div className="p-8 text-center text-gray-500 dark:text-gray-400">Nessuna prenotazione trovata</div>
           )}
         </div>
       </div>

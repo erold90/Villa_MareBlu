@@ -208,20 +208,20 @@ export default function NuovaPrenotazionePage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           >
             <ArrowLeft className="w-4 h-4" />
             Torna indietro
           </button>
 
           {/* Appartamento e Date */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Appartamenti e Date</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Appartamenti e Date</h2>
 
             {/* Date prima */}
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Check-in *
                 </label>
                 <input
@@ -230,12 +230,12 @@ export default function NuovaPrenotazionePage() {
                   value={formData.checkIn}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Check-out *
                 </label>
                 <input
@@ -245,7 +245,7 @@ export default function NuovaPrenotazionePage() {
                   onChange={handleChange}
                   required
                   min={formData.checkIn}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
             </div>
@@ -256,7 +256,7 @@ export default function NuovaPrenotazionePage() {
                   {calcolati.notti} notti selezionate
                 </p>
                 {calcolati.isSettimanaIncompleta && (
-                  <p className="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg">
+                  <p className="text-sm text-amber-700 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 p-3 rounded-lg">
                     ⚠️ <strong>Settimana incompleta:</strong> Il soggiorno è di {calcolati.notti} notti ma il prezzo sarà calcolato su {calcolati.nottiEffettive} notti (settimana intera) perché i giorni mancanti non possono essere affittati separatamente.
                   </p>
                 )}
@@ -265,7 +265,7 @@ export default function NuovaPrenotazionePage() {
 
             {/* Selezione appartamenti (multi-select) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Appartamenti * <span className="text-gray-400 font-normal">(seleziona uno o più)</span>
               </label>
 
@@ -287,29 +287,29 @@ export default function NuovaPrenotazionePage() {
                       className={cn(
                         'p-4 border-2 rounded-xl cursor-pointer transition-all',
                         isSelected
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
                       )}
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="font-semibold text-gray-900">{app.nome}</p>
-                          <p className="text-sm text-gray-500">{app.piano}</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{app.nome}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{app.piano}</p>
                         </div>
                         <div className={cn(
                           'w-6 h-6 rounded-full border-2 flex items-center justify-center',
-                          isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                          isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300 dark:border-gray-600'
                         )}>
                           {isSelected && <span className="text-white text-sm">✓</span>}
                         </div>
                       </div>
 
                       <div className="mt-3 flex items-center gap-4 text-sm">
-                        <span className="flex items-center gap-1 text-gray-600">
+                        <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                           <Bed className="w-4 h-4" />
                           {app.postiLetto} posti
                         </span>
-                        <span className="flex items-center gap-1 text-gray-600">
+                        <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                           <Users className="w-4 h-4" />
                           {app.camere} {app.camere === 1 ? 'camera' : 'camere'}
                         </span>
@@ -318,15 +318,15 @@ export default function NuovaPrenotazionePage() {
                         )}
                       </div>
 
-                      <p className="mt-2 text-xs text-gray-500">{app.lettiDescrizione}</p>
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{app.lettiDescrizione}</p>
                     </div>
                   )
                 })}
               </div>
 
               {formData.appartamentiIds.length > 0 && (
-                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-800">
+                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
+                  <p className="text-sm text-green-800 dark:text-green-200">
                     <strong>Selezionati:</strong> {formData.appartamentiIds.length} appartament{formData.appartamentiIds.length === 1 ? 'o' : 'i'} -
                     <strong> Totale posti letto:</strong> {formData.appartamentiIds.reduce((sum, id) => {
                       const app = appartamentiConfig.find(a => a.id === id)
@@ -339,12 +339,12 @@ export default function NuovaPrenotazionePage() {
           </div>
 
           {/* Dati Ospite */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Dati Ospite</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Dati Ospite</h2>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Nome *
                 </label>
                 <input
@@ -353,12 +353,12 @@ export default function NuovaPrenotazionePage() {
                   value={formData.ospiteNome}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Cognome *
                 </label>
                 <input
@@ -367,12 +367,12 @@ export default function NuovaPrenotazionePage() {
                   value={formData.ospiteCognome}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Email
                 </label>
                 <input
@@ -380,12 +380,12 @@ export default function NuovaPrenotazionePage() {
                   name="ospiteEmail"
                   value={formData.ospiteEmail}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Telefono *
                 </label>
                 <input
@@ -394,12 +394,12 @@ export default function NuovaPrenotazionePage() {
                   value={formData.ospiteTelefono}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Nazione
                 </label>
                 <input
@@ -407,32 +407,32 @@ export default function NuovaPrenotazionePage() {
                   name="ospiteNazione"
                   value={formData.ospiteNazione}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
             </div>
           </div>
 
           {/* Numero Ospiti */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Numero Ospiti</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Numero Ospiti</h2>
 
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Adulti</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Adulti</label>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => handleNumberChange('numAdulti', -1)}
-                    className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-lg font-medium"
+                    className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-medium text-gray-900 dark:text-white"
                   >
                     -
                   </button>
-                  <span className="w-10 text-center text-xl font-semibold">{formData.numAdulti}</span>
+                  <span className="w-10 text-center text-xl font-semibold text-gray-900 dark:text-white">{formData.numAdulti}</span>
                   <button
                     type="button"
                     onClick={() => handleNumberChange('numAdulti', 1)}
-                    className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-lg font-medium"
+                    className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-medium text-gray-900 dark:text-white"
                   >
                     +
                   </button>
@@ -440,20 +440,20 @@ export default function NuovaPrenotazionePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Bambini (3-12)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bambini (3-12)</label>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => handleNumberChange('numBambini', -1)}
-                    className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-lg font-medium"
+                    className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-medium text-gray-900 dark:text-white"
                   >
                     -
                   </button>
-                  <span className="w-10 text-center text-xl font-semibold">{formData.numBambini}</span>
+                  <span className="w-10 text-center text-xl font-semibold text-gray-900 dark:text-white">{formData.numBambini}</span>
                   <button
                     type="button"
                     onClick={() => handleNumberChange('numBambini', 1)}
-                    className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-lg font-medium"
+                    className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-medium text-gray-900 dark:text-white"
                   >
                     +
                   </button>
@@ -461,20 +461,20 @@ export default function NuovaPrenotazionePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Neonati (0-2)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Neonati (0-2)</label>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => handleNumberChange('numNeonati', -1)}
-                    className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-lg font-medium"
+                    className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-medium text-gray-900 dark:text-white"
                   >
                     -
                   </button>
-                  <span className="w-10 text-center text-xl font-semibold">{formData.numNeonati}</span>
+                  <span className="w-10 text-center text-xl font-semibold text-gray-900 dark:text-white">{formData.numNeonati}</span>
                   <button
                     type="button"
                     onClick={() => handleNumberChange('numNeonati', 1)}
-                    className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-lg font-medium"
+                    className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-medium text-gray-900 dark:text-white"
                   >
                     +
                   </button>
@@ -483,25 +483,25 @@ export default function NuovaPrenotazionePage() {
             </div>
 
             {formData.numNeonati > 0 && (
-              <p className="mt-4 text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">
+              <p className="mt-4 text-sm text-amber-600 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 p-3 rounded-lg">
                 ℹ️ I neonati (0-2 anni) dormono in culla o con i genitori e <strong>non contano</strong> nei posti letto disponibili. Culla disponibile su richiesta gratuita.
               </p>
             )}
           </div>
 
           {/* Extra: Animali e Biancheria */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Extra</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Extra</h2>
 
             <div className="space-y-4">
               {/* Animali */}
-              <div className="p-4 border border-gray-200 rounded-lg">
+              <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Dog className="w-5 h-5 text-amber-500" />
                     <div>
-                      <p className="font-medium text-gray-900">Animali domestici</p>
-                      <p className="text-sm text-gray-500">Il cliente porta animali?</p>
+                      <p className="font-medium text-gray-900 dark:text-white">Animali domestici</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Il cliente porta animali?</p>
                     </div>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -512,13 +512,13 @@ export default function NuovaPrenotazionePage() {
                       onChange={handleChange}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
 
                 {formData.animali && (
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Dettagli animali (tipo, numero, taglia)
                     </label>
                     <input
@@ -527,20 +527,20 @@ export default function NuovaPrenotazionePage() {
                       value={formData.animaliDettaglio}
                       onChange={handleChange}
                       placeholder="Es: 1 cane di taglia media"
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                     />
                   </div>
                 )}
               </div>
 
               {/* Biancheria */}
-              <div className="p-4 border border-gray-200 rounded-lg">
+              <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Calculator className="w-5 h-5 text-blue-500" />
                     <div>
-                      <p className="font-medium text-gray-900">Biancheria</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium text-gray-900 dark:text-white">Biancheria</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {formatPrice(costiExtra.biancheria)} per persona = {formatPrice(calcolati.biancheriaCosto)}
                       </p>
                     </div>
@@ -553,7 +553,7 @@ export default function NuovaPrenotazionePage() {
                       onChange={handleChange}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
               </div>
@@ -561,19 +561,19 @@ export default function NuovaPrenotazionePage() {
           </div>
 
           {/* Fonte prenotazione */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Fonte Prenotazione</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Fonte Prenotazione</h2>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Canale
                 </label>
                 <select
                   name="fonte"
                   value={formData.fonte}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <option value="direct">Diretto</option>
                   <option value="airbnb">Airbnb</option>
@@ -584,7 +584,7 @@ export default function NuovaPrenotazionePage() {
 
               {formData.fonte !== 'direct' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     ID Prenotazione OTA
                   </label>
                   <input
@@ -593,7 +593,7 @@ export default function NuovaPrenotazionePage() {
                     value={formData.fonteRiferimento}
                     onChange={handleChange}
                     placeholder="Es: HM12345678"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   />
                 </div>
               )}
@@ -601,12 +601,12 @@ export default function NuovaPrenotazionePage() {
           </div>
 
           {/* Note */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Note</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Note</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Richieste speciali dell ospite
                 </label>
                 <textarea
@@ -614,12 +614,12 @@ export default function NuovaPrenotazionePage() {
                   value={formData.richiesteSpeciali}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Note interne
                 </label>
                 <textarea
@@ -628,23 +628,23 @@ export default function NuovaPrenotazionePage() {
                   onChange={handleChange}
                   rows={3}
                   placeholder="Visibili solo a te..."
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
             </div>
           </div>
 
           {/* Riepilogo Costi - MODIFICABILE */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Riepilogo Costi</h2>
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Modificabile</span>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Riepilogo Costi</h2>
+              <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Modificabile</span>
             </div>
 
             {/* Suggerimento automatico */}
             {calcolati.prezzoSoggiorno > 0 && prezziManuali.prezzoSoggiorno !== calcolati.prezzoSoggiorno && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-700">
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-200">
                   💡 <strong>Prezzo suggerito:</strong> {formatPrice(calcolati.prezzoSoggiorno)} ({calcolati.notti} notti)
                   <button
                     type="button"
@@ -659,13 +659,13 @@ export default function NuovaPrenotazionePage() {
 
             <div className="space-y-4">
               {/* Prezzo Soggiorno - Modificabile */}
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
                 <div>
-                  <span className="text-gray-600">
+                  <span className="text-gray-600 dark:text-gray-300">
                     Soggiorno ({calcolati.notti} notti{calcolati.isSettimanaIncompleta && ` → prezzo ${calcolati.nottiEffettive} notti`})
                   </span>
                   {prezziManuali.prezzoSoggiorno !== calcolati.prezzoSoggiorno && prezziManuali.prezzoSoggiorno > 0 && (
-                    <span className="ml-2 text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+                    <span className="ml-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded">
                       Modificato
                     </span>
                   )}
@@ -676,15 +676,15 @@ export default function NuovaPrenotazionePage() {
                     type="number"
                     value={prezziManuali.prezzoSoggiorno}
                     onChange={(e) => setPrezziManuali(prev => ({ ...prev, prezzoSoggiorno: parseFloat(e.target.value) || 0 }))}
-                    className="w-28 px-3 py-1.5 border border-gray-300 rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500"
+                    className="w-28 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
 
               {/* Biancheria - Modificabile */}
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
                 <div>
-                  <span className="text-gray-600">Biancheria</span>
+                  <span className="text-gray-600 dark:text-gray-300">Biancheria</span>
                   {formData.biancheria && (
                     <span className="text-xs text-gray-400 ml-1">
                       (suggerito: {formatPrice((formData.numAdulti + formData.numBambini) * costiExtra.biancheria)})
@@ -697,15 +697,15 @@ export default function NuovaPrenotazionePage() {
                     type="number"
                     value={prezziManuali.biancheriaCosto}
                     onChange={(e) => setPrezziManuali(prev => ({ ...prev, biancheriaCosto: parseFloat(e.target.value) || 0 }))}
-                    className="w-28 px-3 py-1.5 border border-gray-300 rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500"
+                    className="w-28 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
 
               {/* Tassa soggiorno - Modificabile */}
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
                 <div>
-                  <span className="text-gray-600">Tassa soggiorno</span>
+                  <span className="text-gray-600 dark:text-gray-300">Tassa soggiorno</span>
                   <span className="text-xs text-gray-400 ml-1">
                     (suggerito: {formatPrice(formData.numAdulti * calcolati.notti * costiExtra.tassaSoggiorno)})
                   </span>
@@ -716,15 +716,15 @@ export default function NuovaPrenotazionePage() {
                     type="number"
                     value={prezziManuali.tassaSoggiorno}
                     onChange={(e) => setPrezziManuali(prev => ({ ...prev, tassaSoggiorno: parseFloat(e.target.value) || 0 }))}
-                    className="w-28 px-3 py-1.5 border border-gray-300 rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500"
+                    className="w-28 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
 
               {/* Extra / Sconto - Modificabile */}
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
                 <div>
-                  <span className="text-gray-600">Extra / Sconto</span>
+                  <span className="text-gray-600 dark:text-gray-300">Extra / Sconto</span>
                   <span className="text-xs text-gray-400 ml-1">(usa valore negativo per sconto)</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -735,8 +735,8 @@ export default function NuovaPrenotazionePage() {
                     onChange={(e) => setPrezziManuali(prev => ({ ...prev, extra: parseFloat(e.target.value) || 0 }))}
                     placeholder="0"
                     className={cn(
-                      "w-28 px-3 py-1.5 border rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500",
-                      prezziManuali.extra < 0 ? "border-green-300 bg-green-50 text-green-700" : "border-gray-300"
+                      "w-28 px-3 py-1.5 border rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900",
+                      prezziManuali.extra < 0 ? "border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                     )}
                   />
                 </div>
@@ -744,39 +744,39 @@ export default function NuovaPrenotazionePage() {
 
               {/* Sconto applicato */}
               {prezziManuali.extra < 0 && (
-                <div className="flex justify-between py-2 text-green-600 bg-green-50 px-3 rounded-lg">
+                <div className="flex justify-between py-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-3 rounded-lg">
                   <span>🎉 Sconto applicato</span>
                   <span className="font-medium">{formatPrice(prezziManuali.extra)}</span>
                 </div>
               )}
 
               {/* TOTALE */}
-              <div className="flex justify-between py-3 text-lg font-bold border-t-2 border-gray-200 mt-2">
+              <div className="flex justify-between py-3 text-lg font-bold border-t-2 border-gray-200 dark:border-gray-600 mt-2 text-gray-900 dark:text-white">
                 <span>TOTALE</span>
                 <span className="text-blue-600">{formatPrice(totaleFinale)}</span>
               </div>
 
               {/* Acconto e Saldo */}
-              <div className="pt-3 border-t border-gray-200 space-y-3">
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-600 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Acconto</span>
+                  <span className="text-gray-600 dark:text-gray-300">Acconto</span>
                   <div className="flex items-center gap-2">
                     <span className="text-gray-400">€</span>
                     <input
                       type="number"
                       value={prezziManuali.acconto}
                       onChange={(e) => setPrezziManuali(prev => ({ ...prev, acconto: parseFloat(e.target.value) || 0 }))}
-                      className="w-28 px-3 py-1.5 border border-gray-300 rounded-lg text-right font-medium text-green-600 focus:ring-2 focus:ring-blue-500"
+                      className="w-28 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-right font-medium text-green-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900"
                     />
                   </div>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Saldo al check-in</span>
-                  <span className="font-medium">{formatPrice(totaleFinale - prezziManuali.acconto)}</span>
+                  <span className="text-gray-600 dark:text-gray-300">Saldo al check-in</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{formatPrice(totaleFinale - prezziManuali.acconto)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Cauzione (rimborsabile)</span>
-                  <span className="font-medium text-gray-500">{formatPrice(costiExtra.cauzioneDefault)}</span>
+                  <span className="text-gray-600 dark:text-gray-300">Cauzione (rimborsabile)</span>
+                  <span className="font-medium text-gray-500 dark:text-gray-400">{formatPrice(costiExtra.cauzioneDefault)}</span>
                 </div>
               </div>
 
@@ -792,7 +792,7 @@ export default function NuovaPrenotazionePage() {
                     acconto: calcolati.acconto,
                   })
                 }}
-                className="w-full mt-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="w-full mt-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 ↻ Ripristina prezzi suggeriti
               </button>
@@ -812,7 +812,7 @@ export default function NuovaPrenotazionePage() {
               type="button"
               onClick={() => router.back()}
               disabled={saving}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
             >
               Annulla
             </button>
