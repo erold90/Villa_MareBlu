@@ -19,13 +19,13 @@ export default function Header({
   addButtonLabel = 'Nuova',
 }: HeaderProps) {
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
       <div className="px-4 lg:px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Title - Desktop */}
           <div className="hidden lg:block">
-            <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-            {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
+            {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
           </div>
 
           {/* Mobile Logo */}
@@ -34,7 +34,7 @@ export default function Header({
               <span className="text-white font-bold text-sm">VM</span>
             </div>
             <div>
-              <h1 className="font-bold text-gray-900">{title}</h1>
+              <h1 className="font-bold text-gray-900 dark:text-white">{title}</h1>
             </div>
           </div>
 

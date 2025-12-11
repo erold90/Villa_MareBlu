@@ -36,13 +36,25 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Script per caricare tema scuro prima del render
+  const themeScript = `
+    (function() {
+      try {
+        if (localStorage.getItem('darkMode') === 'true') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  `
+
   return (
-    <html lang="it">
+    <html lang="it" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="apple-touch-icon" href="/icons/icon.svg" />
         <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
       </head>
-      <body className={`${inter.variable} font-sans antialiased bg-gray-50`} suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased bg-gray-50 dark:bg-gray-900`} suppressHydrationWarning>
         <div className="min-h-screen">
           <Sidebar />
           <div className="lg:pl-64">
