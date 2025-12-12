@@ -1,48 +1,124 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Header from '@/components/layout/Header'
 import {
   Save,
-  Home,
   Euro,
   Bell,
-  Palette,
-  Database,
-  Shield,
   Globe,
   Smartphone,
+  Loader2,
+  Check,
+  AlertCircle,
+  Database,
 } from 'lucide-react'
-import { cn, formatPrice } from '@/lib/utils'
-import { costiExtra } from '@/config/appartamenti'
+import { cn } from '@/lib/utils'
+
+interface Settings {
+  biancheria: number
+  tassaSoggiorno: number
+  cauzioneDefault: number
+  accontoPercentuale: number
+  notificheEmail: boolean
+  notifichePush: boolean
+  promemoriCheckIn: boolean
+  promemoriPagamenti: boolean
+  lingua: string
+  valuta: string
+  formatoData: string
+}
 
 export default function ImpostazioniPage() {
-  const [settings, setSettings] = useState({
-    // Costi
-    biancheria: costiExtra.biancheria,
-    tassaSoggiorno: costiExtra.tassaSoggiorno,
-    cauzioneDefault: costiExtra.cauzioneDefault,
-    accontoPercentuale: costiExtra.accontoPercentuale,
-
-    // Notifiche
+  const [settings, setSettings] = useState<Settings>({
+    biancheria: 10,
+    tassaSoggiorno: 1,
+    cauzioneDefault: 200,
+    accontoPercentuale: 30,
     notificheEmail: true,
     notifichePush: true,
     promemoriCheckIn: true,
     promemoriPagamenti: true,
-
-    // Preferenze
     lingua: 'it',
     valuta: 'EUR',
     formatoData: 'dd/mm/yyyy',
   })
 
-  const handleChange = (key: string, value: number | boolean | string) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [fonte, setFonte] = useState<'database' | 'config'>('config')
+  const [hasChanges, setHasChanges] = useState(false)
+  const [originalSettings, setOriginalSettings] = useState<Settings | null>(null)
+
+  useEffect(() => {
+    fetchSettings()
+  }, [])
+
+  async function fetchSettings() {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await fetch('/api/impostazioni')
+      if (!response.ok) throw new Error('Errore nel caricamento')
+      const data = await response.json()
+      setSettings(data.settings)
+      setOriginalSettings(data.settings)
+      setFonte(data.fonte)
+      setHasChanges(false)
+    } catch (err) {
+      setError('Errore nel caricamento delle impostazioni')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleSave = () => {
-    console.log('Saving settings:', settings)
-    // In production: save to database
+  const handleChange = (key: keyof Settings, value: number | boolean | string) => {
+    setSettings((prev) => ({ ...prev, [key]: value }))
+    setHasChanges(true)
+  }
+
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      setError(null)
+      setSuccess(null)
+
+      const response = await fetch('/api/impostazioni', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings }),
+      })
+
+      if (!response.ok) {
+        const errData = await response.json()
+        throw new Error(errData.error || 'Errore nel salvataggio')
+      }
+
+      setSuccess('Impostazioni salvate con successo!')
+      setFonte('database')
+      setHasChanges(false)
+      setOriginalSettings(settings)
+
+      setTimeout(() => setSuccess(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Errore nel salvataggio')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Header title="Impostazioni" subtitle="Caricamento..." />
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      </>
+    )
   }
 
   return (
@@ -50,6 +126,36 @@ export default function ImpostazioniPage() {
       <Header title="Impostazioni" />
 
       <div className="p-4 lg:p-6 space-y-6 max-w-3xl mx-auto">
+        {/* Stato fonte dati */}
+        <div className={cn(
+          'flex items-center gap-3 p-3 rounded-lg',
+          fonte === 'database'
+            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+            : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+        )}>
+          <Database className="w-5 h-5" />
+          <span className="text-sm font-medium">
+            {fonte === 'database'
+              ? 'Impostazioni caricate dal database'
+              : 'Impostazioni di default (non ancora salvate nel database)'}
+          </span>
+        </div>
+
+        {/* Messaggi */}
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-4 rounded-lg flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 p-4 rounded-lg flex items-center gap-3">
+            <Check className="w-5 h-5 flex-shrink-0" />
+            {success}
+          </div>
+        )}
+
         {/* Costi e Tariffe */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
           <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
@@ -142,7 +248,7 @@ export default function ImpostazioniPage() {
                   onChange={(e) => handleChange('notificheEmail', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
@@ -158,7 +264,7 @@ export default function ImpostazioniPage() {
                   onChange={(e) => handleChange('notifichePush', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
@@ -174,7 +280,7 @@ export default function ImpostazioniPage() {
                   onChange={(e) => handleChange('promemoriCheckIn', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
@@ -190,7 +296,7 @@ export default function ImpostazioniPage() {
                   onChange={(e) => handleChange('promemoriPagamenti', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
           </div>
@@ -263,11 +369,11 @@ export default function ImpostazioniPage() {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-500 dark:text-gray-400">Database</span>
-              <span className="font-medium text-gray-900 dark:text-white">SQLite</span>
+              <span className="font-medium text-gray-900 dark:text-white">PostgreSQL (Neon)</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Ultimo backup</span>
-              <span className="font-medium text-gray-900 dark:text-white">Mai</span>
+              <span className="text-gray-500 dark:text-gray-400">Hosting</span>
+              <span className="font-medium text-gray-900 dark:text-white">Vercel</span>
             </div>
           </div>
         </div>
@@ -275,11 +381,27 @@ export default function ImpostazioniPage() {
         {/* Save Button */}
         <button
           onClick={handleSave}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+          disabled={saving}
+          className={cn(
+            'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl transition-colors',
+            hasChanges
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          )}
         >
-          <Save className="w-5 h-5" />
-          Salva Impostazioni
+          {saving ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <Save className="w-5 h-5" />
+          )}
+          {saving ? 'Salvataggio...' : 'Salva Impostazioni'}
         </button>
+
+        {hasChanges && (
+          <p className="text-center text-sm text-amber-600 dark:text-amber-400">
+            Hai modifiche non salvate
+          </p>
+        )}
       </div>
     </>
   )
