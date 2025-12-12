@@ -1,0 +1,14 @@
+{
+  "name": "facebook-poster",
+  "version": "1.0.0",
+  "description": "Script per postare annunci nei gruppi Facebook",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node index.js --test"
+  },
+  "dependencies": {
+    "puppeteer-core": "^22.0.0"
+  }
+}

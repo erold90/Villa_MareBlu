@@ -133,23 +133,51 @@ async function creaPrenotazione(dati: AzioneCreaPrenotazione['dati']) {
 // Modifica il prezzo di una settimana
 async function modificaPrezzo(dati: AzioneModificaPrezzo['dati']) {
   try {
-    // Salviamo le modifiche prezzi nella tabella Impostazione
-    await prisma.impostazione.upsert({
+    // Trova il periodo corrispondente alla settimana nel database
+    const prezziAnno = await prisma.periodoPrezzo.findMany({
       where: {
-        chiave: `prezzo_${dati.anno}_${dati.settimana}_${dati.appartamentoId}`,
+        appartamentoId: dati.appartamentoId,
+        dataInizio: { gte: new Date(`${dati.anno}-01-01`) },
+        dataFine: { lte: new Date(`${dati.anno}-12-31`) },
       },
-      update: {
-        valore: dati.nuovoPrezzo.toString(),
-      },
-      create: {
-        chiave: `prezzo_${dati.anno}_${dati.settimana}_${dati.appartamentoId}`,
-        valore: dati.nuovoPrezzo.toString(),
+      orderBy: { dataInizio: 'asc' },
+    })
+
+    if (prezziAnno.length === 0) {
+      // Se non ci sono prezzi nel DB, dobbiamo prima importarli dal config
+      return {
+        success: false,
+        messaggio: `Nessun prezzo trovato nel database per l'anno ${dati.anno}. Vai alla pagina Prezzi e salva prima i prezzi nel database.`,
+      }
+    }
+
+    // Trova la settimana corretta (indice 0-based, settimana è 1-based)
+    const settimanaIndex = dati.settimana - 1
+    if (settimanaIndex < 0 || settimanaIndex >= prezziAnno.length) {
+      return {
+        success: false,
+        messaggio: `Settimana ${dati.settimana} non trovata per l'anno ${dati.anno}`,
+      }
+    }
+
+    const periodoId = prezziAnno[settimanaIndex].id
+
+    // Aggiorna il prezzo nella tabella PeriodoPrezzo
+    await prisma.periodoPrezzo.update({
+      where: { id: periodoId },
+      data: {
+        prezzoSettimana: dati.nuovoPrezzo,
+        prezzoNotte: Math.round(dati.nuovoPrezzo / 7),
       },
     })
 
+    const periodo = prezziAnno[settimanaIndex]
+    const dataInizio = periodo.dataInizio.toISOString().split('T')[0]
+    const dataFine = periodo.dataFine.toISOString().split('T')[0]
+
     return {
       success: true,
-      messaggio: `Prezzo aggiornato: Settimana ${dati.settimana} App ${dati.appartamentoId} → €${dati.nuovoPrezzo}`,
+      messaggio: `Prezzo aggiornato: App ${dati.appartamentoId}, ${dataInizio} - ${dataFine} → €${dati.nuovoPrezzo}/settimana`,
     }
   } catch (error) {
     console.error('Errore modifica prezzo:', error)
