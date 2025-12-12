@@ -235,11 +235,6 @@ export default function OspitiPage() {
                 ))}
                 <option value="tutti">Tutti gli ospiti (storico)</option>
               </select>
-              {!mostraTutti && (
-                <span className={cn('text-xs px-2 py-1 rounded-full', stagione.badge.colore)}>
-                  {stagione.badge.testo}
-                </span>
-              )}
             </div>
 
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">

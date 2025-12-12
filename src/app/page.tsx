@@ -147,9 +147,6 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          <span className="text-sm font-medium px-3 py-1 bg-white/30 rounded-full">
-            {stagione.badge.testo}
-          </span>
         </div>
 
         {/* Messaggio se non ci sono dati per la stagione corrente */}

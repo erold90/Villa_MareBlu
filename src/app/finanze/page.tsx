@@ -152,9 +152,6 @@ export default function FinanzePage() {
                 </option>
               ))}
             </select>
-            <span className={cn('text-xs px-2 py-1 rounded-full', stagione.badge.colore)}>
-              {stagione.badge.testo}
-            </span>
           </div>
         </div>
 
