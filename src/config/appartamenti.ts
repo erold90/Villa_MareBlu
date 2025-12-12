@@ -97,9 +97,9 @@ export function getSettimanePerAnno(anno: number) {
     { num: 7, inizio: `${anno}-07-11`, fine: `${anno}-07-18`, periodo: 'Media', prezzi: { 1: 500, 2: 600, 3: 450, 4: 475 } },
     { num: 8, inizio: `${anno}-07-18`, fine: `${anno}-07-25`, periodo: 'Media', prezzi: { 1: 500, 2: 600, 3: 450, 4: 475 } },
     { num: 9, inizio: `${anno}-07-25`, fine: `${anno}-08-01`, periodo: 'Media', prezzi: { 1: 500, 2: 600, 3: 450, 4: 475 } },
-    // Alta stagione - Agosto (prima di Ferragosto)
-    { num: 10, inizio: `${anno}-08-01`, fine: `${anno}-08-08`, periodo: 'Alta', prezzi: { 1: 750, 2: 900, 3: 650, 4: 700 } },
-    { num: 11, inizio: `${anno}-08-08`, fine: `${anno}-08-15`, periodo: 'Alta', prezzi: { 1: 750, 2: 900, 3: 650, 4: 700 } },
+    // Altissima stagione - Agosto (incluso pre-Ferragosto)
+    { num: 10, inizio: `${anno}-08-01`, fine: `${anno}-08-08`, periodo: 'Altissima', prezzi: { 1: 850, 2: 1000, 3: 750, 4: 800 } },
+    { num: 11, inizio: `${anno}-08-08`, fine: `${anno}-08-15`, periodo: 'Altissima', prezzi: { 1: 850, 2: 1000, 3: 750, 4: 800 } },
     // Altissima stagione - Ferragosto
     { num: 12, inizio: `${anno}-08-15`, fine: `${anno}-08-22`, periodo: 'Altissima', prezzi: { 1: 850, 2: 1000, 3: 750, 4: 800 } },
     // Post-Ferragosto
@@ -197,17 +197,16 @@ export function getPrezziPerAnno(anno: number) {
     periodi: [
       { nome: 'Bassa', dataInizio: `${anno}-05-30`, dataFine: `${anno}-07-11` },
       { nome: 'Media', dataInizio: `${anno}-07-11`, dataFine: `${anno}-08-01` },
-      { nome: 'Alta', dataInizio: `${anno}-08-01`, dataFine: `${anno}-08-15` },
-      { nome: 'Altissima', dataInizio: `${anno}-08-15`, dataFine: `${anno}-08-22` },
+      { nome: 'Altissima', dataInizio: `${anno}-08-01`, dataFine: `${anno}-08-22` },
       { nome: 'Media-Alta', dataInizio: `${anno}-08-22`, dataFine: `${anno}-08-29` },
       { nome: 'Media', dataInizio: `${anno}-08-29`, dataFine: `${anno}-09-12` },
       { nome: 'Bassa', dataInizio: `${anno}-09-12`, dataFine: `${anno}-11-07` },
     ],
     prezzi: {
-      1: [400, 500, 750, 850, 650, 500, 400],
-      2: [500, 600, 900, 1000, 750, 600, 500],
-      3: [350, 450, 650, 750, 550, 400, 350],
-      4: [375, 475, 700, 800, 600, 450, 375],
+      1: [400, 500, 850, 650, 500, 400],
+      2: [500, 600, 1000, 750, 600, 500],
+      3: [350, 450, 750, 550, 400, 350],
+      4: [375, 475, 800, 600, 450, 375],
     } as Record<number, number[]>,
   }
 }
