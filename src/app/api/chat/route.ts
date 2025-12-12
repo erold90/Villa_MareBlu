@@ -12,10 +12,45 @@ import { getContestoAssistente } from '@/lib/database'
 import { prisma } from '@/lib/prisma'
 import { getStagioneCorrente, getDateStagione } from '@/lib/stagione'
 
-// Legge i prezzi dal database, con fallback al config
+// Auto-import prezzi da config a database se vuoto
+async function autoImportPrezziSeVuoto(anno: number): Promise<void> {
+  const settimaneConfig = getSettimanePerAnno(anno)
+
+  const prezziDaInserire: Array<{
+    appartamentoId: number
+    nome: string
+    dataInizio: Date
+    dataFine: Date
+    prezzoSettimana: number
+    prezzoNotte: number
+    minNotti: number
+  }> = []
+
+  for (const settimana of settimaneConfig) {
+    for (const [appId, prezzo] of Object.entries(settimana.prezzi)) {
+      prezziDaInserire.push({
+        appartamentoId: parseInt(appId),
+        nome: settimana.periodo,
+        dataInizio: new Date(settimana.inizio),
+        dataFine: new Date(settimana.fine),
+        prezzoSettimana: prezzo as number,
+        prezzoNotte: Math.round((prezzo as number) / 7),
+        minNotti: 7,
+      })
+    }
+  }
+
+  await prisma.periodoPrezzo.createMany({
+    data: prezziDaInserire,
+  })
+
+  console.log(`[AI AUTO-IMPORT] Importati ${prezziDaInserire.length} prezzi per anno ${anno}`)
+}
+
+// Legge i prezzi SOLO dal database (auto-import se vuoto)
 async function getPrezziDaDatabase(anno: number) {
   try {
-    const prezziDb = await prisma.periodoPrezzo.findMany({
+    let prezziDb = await prisma.periodoPrezzo.findMany({
       where: {
         dataInizio: { gte: new Date(`${anno}-01-01`) },
         dataFine: { lte: new Date(`${anno}-12-31`) },
@@ -23,52 +58,63 @@ async function getPrezziDaDatabase(anno: number) {
       orderBy: [{ dataInizio: 'asc' }],
     })
 
-    if (prezziDb.length > 0) {
-      // Raggruppa per settimana
-      const settimaneMap = new Map<string, {
-        num: number
-        inizio: string
-        fine: string
-        periodo: string
-        prezzi: Record<number, number>
-      }>()
+    // AUTO-IMPORT: Se database vuoto, importa dal config
+    if (prezziDb.length === 0) {
+      await autoImportPrezziSeVuoto(anno)
 
-      prezziDb.forEach(p => {
-        const key = p.dataInizio.toISOString().split('T')[0]
-        if (!settimaneMap.has(key)) {
-          settimaneMap.set(key, {
-            num: 0,
-            inizio: p.dataInizio.toISOString().split('T')[0],
-            fine: p.dataFine.toISOString().split('T')[0],
-            periodo: p.nome,
-            prezzi: {},
-          })
-        }
-        const sett = settimaneMap.get(key)!
-        sett.prezzi[p.appartamentoId] = p.prezzoSettimana
+      // Rileggi dopo import
+      prezziDb = await prisma.periodoPrezzo.findMany({
+        where: {
+          dataInizio: { gte: new Date(`${anno}-01-01`) },
+          dataFine: { lte: new Date(`${anno}-12-31`) },
+        },
+        orderBy: [{ dataInizio: 'asc' }],
       })
-
-      const settimane = Array.from(settimaneMap.values())
-        .sort((a, b) => new Date(a.inizio).getTime() - new Date(b.inizio).getTime())
-        .map((s, i) => ({ ...s, num: i + 1 }))
-
-      return { settimane, fonte: 'database' as const }
     }
+
+    // Raggruppa per settimana
+    const settimaneMap = new Map<string, {
+      num: number
+      inizio: string
+      fine: string
+      periodo: string
+      prezzi: Record<number, number>
+    }>()
+
+    prezziDb.forEach(p => {
+      const key = p.dataInizio.toISOString().split('T')[0]
+      if (!settimaneMap.has(key)) {
+        settimaneMap.set(key, {
+          num: 0,
+          inizio: p.dataInizio.toISOString().split('T')[0],
+          fine: p.dataFine.toISOString().split('T')[0],
+          periodo: p.nome,
+          prezzi: {},
+        })
+      }
+      const sett = settimaneMap.get(key)!
+      sett.prezzi[p.appartamentoId] = p.prezzoSettimana
+    })
+
+    const settimane = Array.from(settimaneMap.values())
+      .sort((a, b) => new Date(a.inizio).getTime() - new Date(b.inizio).getTime())
+      .map((s, i) => ({ ...s, num: i + 1 }))
+
+    return { settimane, fonte: 'database' as const }
   } catch (error) {
     console.error('Errore lettura prezzi da DB:', error)
-  }
-
-  // Fallback al config
-  const settimaneConfig = getSettimanePerAnno(anno)
-  return {
-    settimane: settimaneConfig.map(s => ({
-      num: s.num,
-      inizio: s.inizio,
-      fine: s.fine,
-      periodo: s.periodo,
-      prezzi: s.prezzi as Record<number, number>,
-    })),
-    fonte: 'config' as const
+    // In caso di errore DB, fallback al config (solo per non bloccare)
+    const settimaneConfig = getSettimanePerAnno(anno)
+    return {
+      settimane: settimaneConfig.map(s => ({
+        num: s.num,
+        inizio: s.inizio,
+        fine: s.fine,
+        periodo: s.periodo,
+        prezzi: s.prezzi as Record<number, number>,
+      })),
+      fonte: 'config (errore DB)' as const
+    }
   }
 }
 

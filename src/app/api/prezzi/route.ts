@@ -6,6 +6,42 @@ import {
 } from '@/lib/stagione'
 import { getSettimanePerAnno, appartamentiConfig } from '@/config/appartamenti'
 
+// Funzione per importare automaticamente i prezzi dal config al database
+async function autoImportPrezziDaConfig(anno: number): Promise<number> {
+  const settimaneConfig = getSettimanePerAnno(anno)
+
+  const prezziDaInserire: Array<{
+    appartamentoId: number
+    nome: string
+    dataInizio: Date
+    dataFine: Date
+    prezzoSettimana: number
+    prezzoNotte: number
+    minNotti: number
+  }> = []
+
+  for (const settimana of settimaneConfig) {
+    for (const [appId, prezzo] of Object.entries(settimana.prezzi)) {
+      prezziDaInserire.push({
+        appartamentoId: parseInt(appId),
+        nome: settimana.periodo,
+        dataInizio: new Date(settimana.inizio),
+        dataFine: new Date(settimana.fine),
+        prezzoSettimana: prezzo as number,
+        prezzoNotte: Math.round((prezzo as number) / 7),
+        minNotti: 7,
+      })
+    }
+  }
+
+  await prisma.periodoPrezzo.createMany({
+    data: prezziDaInserire,
+  })
+
+  console.log(`[AUTO-IMPORT] Importati ${prezziDaInserire.length} prezzi per anno ${anno} dal config al database`)
+  return prezziDaInserire.length
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -16,7 +52,7 @@ export async function GET(request: NextRequest) {
     const stagioniDisponibili = getStagioniDisponibili()
 
     // Prova a leggere dal database
-    const prezziDb = await prisma.periodoPrezzo.findMany({
+    let prezziDb = await prisma.periodoPrezzo.findMany({
       where: {
         dataInizio: {
           gte: new Date(`${annoRichiesto}-01-01`),
@@ -28,64 +64,57 @@ export async function GET(request: NextRequest) {
       orderBy: [{ appartamentoId: 'asc' }, { dataInizio: 'asc' }],
     })
 
-    // Se ci sono prezzi nel DB, li usiamo
-    if (prezziDb.length > 0) {
-      // Raggruppa per settimana
-      const settimaneMap = new Map<string, {
-        numero: number
-        inizio: string
-        fine: string
-        periodo: string
-        prezzi: Record<number, number>
-      }>()
+    // AUTO-IMPORT: Se database vuoto per questo anno, importa dal config
+    if (prezziDb.length === 0) {
+      await autoImportPrezziDaConfig(annoRichiesto)
 
-      prezziDb.forEach(p => {
-        const key = `${p.dataInizio.toISOString().split('T')[0]}`
-        if (!settimaneMap.has(key)) {
-          settimaneMap.set(key, {
-            numero: 0,
-            inizio: p.dataInizio.toISOString().split('T')[0],
-            fine: p.dataFine.toISOString().split('T')[0],
-            periodo: p.nome,
-            prezzi: {},
-          })
-        }
-        const sett = settimaneMap.get(key)!
-        sett.prezzi[p.appartamentoId] = p.prezzoSettimana
-      })
-
-      // Converti in array e numera
-      const settimane = Array.from(settimaneMap.values())
-        .sort((a, b) => new Date(a.inizio).getTime() - new Date(b.inizio).getTime())
-        .map((s, i) => ({ ...s, numero: i + 1 }))
-
-      return NextResponse.json({
-        anno: annoRichiesto,
-        stagioniDisponibili,
-        fonte: 'database',
-        settimane,
-        appartamenti: appartamentiConfig.map(a => ({
-          id: a.id,
-          nome: a.nome,
-          colore: a.colore,
-        })),
+      // Rileggi dal database dopo l'import
+      prezziDb = await prisma.periodoPrezzo.findMany({
+        where: {
+          dataInizio: {
+            gte: new Date(`${annoRichiesto}-01-01`),
+          },
+          dataFine: {
+            lte: new Date(`${annoRichiesto}-12-31`),
+          },
+        },
+        orderBy: [{ appartamentoId: 'asc' }, { dataInizio: 'asc' }],
       })
     }
 
-    // Altrimenti leggiamo dal config
-    const settimaneConfig = getSettimanePerAnno(annoRichiesto)
-    const settimane = settimaneConfig.map(s => ({
-      numero: s.num,
-      inizio: s.inizio,
-      fine: s.fine,
-      periodo: s.periodo,
-      prezzi: s.prezzi,
-    }))
+    // Raggruppa per settimana
+    const settimaneMap = new Map<string, {
+      numero: number
+      inizio: string
+      fine: string
+      periodo: string
+      prezzi: Record<number, number>
+    }>()
+
+    prezziDb.forEach(p => {
+      const key = `${p.dataInizio.toISOString().split('T')[0]}`
+      if (!settimaneMap.has(key)) {
+        settimaneMap.set(key, {
+          numero: 0,
+          inizio: p.dataInizio.toISOString().split('T')[0],
+          fine: p.dataFine.toISOString().split('T')[0],
+          periodo: p.nome,
+          prezzi: {},
+        })
+      }
+      const sett = settimaneMap.get(key)!
+      sett.prezzi[p.appartamentoId] = p.prezzoSettimana
+    })
+
+    // Converti in array e numera
+    const settimane = Array.from(settimaneMap.values())
+      .sort((a, b) => new Date(a.inizio).getTime() - new Date(b.inizio).getTime())
+      .map((s, i) => ({ ...s, numero: i + 1 }))
 
     return NextResponse.json({
       anno: annoRichiesto,
       stagioniDisponibili,
-      fonte: 'config',
+      fonte: 'database',
       settimane,
       appartamenti: appartamentiConfig.map(a => ({
         id: a.id,
