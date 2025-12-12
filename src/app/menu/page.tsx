@@ -13,6 +13,7 @@ import {
   Sun,
   Download,
   Bot,
+  BadgeEuro,
 } from 'lucide-react'
 
 const menuItems = [
@@ -21,6 +22,7 @@ const menuItems = [
     items: [
       { name: 'Assistente AI', href: '/assistente', icon: Bot, description: 'Chat con intelligenza artificiale' },
       { name: 'Ospiti', href: '/ospiti', icon: Users, description: 'Anagrafica ospiti' },
+      { name: 'Prezzi', href: '/prezzi', icon: BadgeEuro, description: 'Gestione listino prezzi' },
       { name: 'Analytics', href: '/analytics', icon: BarChart3, description: 'Statistiche e report' },
     ],
   },

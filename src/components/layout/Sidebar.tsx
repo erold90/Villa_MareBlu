@@ -15,6 +15,7 @@ import {
   LogOut,
   Bot,
   Sparkles,
+  BadgeEuro,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Pulizie', href: '/pulizie', icon: Sparkles },
   { name: 'Ospiti', href: '/ospiti', icon: Users },
   { name: 'Finanze', href: '/finanze', icon: Wallet },
+  { name: 'Prezzi', href: '/prezzi', icon: BadgeEuro },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Assistente AI', href: '/assistente', icon: Bot },
 ]
