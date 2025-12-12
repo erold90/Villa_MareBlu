@@ -2,9 +2,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import {
   appartamentiConfig,
-  getPrezziPerAnno,
   getSettimanePerAnno,
-  costiExtra,
+  costiExtra as costiExtraConfig,
   strutturaInfo,
   regoleCasa,
   infoZona
@@ -12,6 +11,94 @@ import {
 import { getContestoAssistente } from '@/lib/database'
 import { prisma } from '@/lib/prisma'
 import { getStagioneCorrente, getDateStagione } from '@/lib/stagione'
+
+// Legge i prezzi dal database, con fallback al config
+async function getPrezziDaDatabase(anno: number) {
+  try {
+    const prezziDb = await prisma.periodoPrezzo.findMany({
+      where: {
+        dataInizio: { gte: new Date(`${anno}-01-01`) },
+        dataFine: { lte: new Date(`${anno}-12-31`) },
+      },
+      orderBy: [{ dataInizio: 'asc' }],
+    })
+
+    if (prezziDb.length > 0) {
+      // Raggruppa per settimana
+      const settimaneMap = new Map<string, {
+        num: number
+        inizio: string
+        fine: string
+        periodo: string
+        prezzi: Record<number, number>
+      }>()
+
+      prezziDb.forEach(p => {
+        const key = p.dataInizio.toISOString().split('T')[0]
+        if (!settimaneMap.has(key)) {
+          settimaneMap.set(key, {
+            num: 0,
+            inizio: p.dataInizio.toISOString().split('T')[0],
+            fine: p.dataFine.toISOString().split('T')[0],
+            periodo: p.nome,
+            prezzi: {},
+          })
+        }
+        const sett = settimaneMap.get(key)!
+        sett.prezzi[p.appartamentoId] = p.prezzoSettimana
+      })
+
+      const settimane = Array.from(settimaneMap.values())
+        .sort((a, b) => new Date(a.inizio).getTime() - new Date(b.inizio).getTime())
+        .map((s, i) => ({ ...s, num: i + 1 }))
+
+      return { settimane, fonte: 'database' as const }
+    }
+  } catch (error) {
+    console.error('Errore lettura prezzi da DB:', error)
+  }
+
+  // Fallback al config
+  const settimaneConfig = getSettimanePerAnno(anno)
+  return {
+    settimane: settimaneConfig.map(s => ({
+      num: s.num,
+      inizio: s.inizio,
+      fine: s.fine,
+      periodo: s.periodo,
+      prezzi: s.prezzi as Record<number, number>,
+    })),
+    fonte: 'config' as const
+  }
+}
+
+// Legge le impostazioni dal database, con fallback al config
+async function getImpostazioniDaDatabase() {
+  const defaults = {
+    biancheria: costiExtraConfig.biancheria,
+    tassaSoggiorno: costiExtraConfig.tassaSoggiorno,
+    cauzioneDefault: costiExtraConfig.cauzioneDefault,
+    accontoPercentuale: costiExtraConfig.accontoPercentuale,
+  }
+
+  try {
+    const impostazioniDb = await prisma.impostazione.findMany()
+
+    if (impostazioniDb.length > 0) {
+      const settings = { ...defaults }
+      impostazioniDb.forEach(imp => {
+        if (imp.chiave in settings) {
+          (settings as Record<string, number>)[imp.chiave] = parseInt(imp.valore) || 0
+        }
+      })
+      return { settings, fonte: 'database' as const }
+    }
+  } catch (error) {
+    console.error('Errore lettura impostazioni da DB:', error)
+  }
+
+  return { settings: defaults, fonte: 'config' as const }
+}
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -56,7 +143,10 @@ async function generateSystemPrompt() {
   }
 
   const stagioneCorrente = getStagioneCorrente()
-  const prezziConfig = getPrezziPerAnno(stagioneCorrente)
+
+  // Leggi prezzi e impostazioni dal database
+  const { settimane: prezziSettimane, fonte: fontePrezzi } = await getPrezziDaDatabase(stagioneCorrente)
+  const { settings: costiExtra, fonte: fonteImpostazioni } = await getImpostazioniDaDatabase()
 
   const basePrompt = `Sei l'assistente AI di Villa MareBlu, una struttura con 4 appartamenti per affitti turistici nel Salento.
 
@@ -122,24 +212,37 @@ ${appartamentiConfig.map(app => `
 **CAPACITÀ TOTALE STRUTTURA:** 23 posti letto (ideale per gruppi familiari fino a 23 persone + neonati)
 
 ## PREZZI STAGIONE ${stagioneCorrente} - SETTIMANE SABATO-SABATO (in EUR)
+**Fonte dati: ${fontePrezzi === 'database' ? '📊 DATABASE (aggiornati)' : '📄 Config file'}**
 
-${(() => {
-  const settimane = getSettimanePerAnno(stagioneCorrente)
-  return `| Sett. | Date (Sab-Sab) | Periodo | App 1 | App 2 | App 3 | App 4 |
+| Sett. | Date (Sab-Sab) | Periodo | App 1 | App 2 | App 3 | App 4 |
 |-------|----------------|---------|-------|-------|-------|-------|
-${settimane.map(s =>
-  `| ${s.num} | ${s.inizio.slice(5)} → ${s.fine.slice(5)} | ${s.periodo} | €${s.prezzi[1]} | €${s.prezzi[2]} | €${s.prezzi[3]} | €${s.prezzi[4]} |`
-).join('\n')}`
+${prezziSettimane.map(s =>
+  `| ${s.num} | ${s.inizio.slice(5)} → ${s.fine.slice(5)} | ${s.periodo} | €${s.prezzi[1] || '-'} | €${s.prezzi[2] || '-'} | €${s.prezzi[3] || '-'} | €${s.prezzi[4] || '-'} |`
+).join('\n')}
+
+### RIEPILOGO PER PERIODO (generato dai dati ${fontePrezzi}):
+${(() => {
+  // Raggruppa per periodo e calcola i prezzi
+  const periodi = new Map<string, { prezzi: Record<number, number[]> }>()
+  prezziSettimane.forEach(s => {
+    if (!periodi.has(s.periodo)) {
+      periodi.set(s.periodo, { prezzi: { 1: [], 2: [], 3: [], 4: [] } })
+    }
+    const p = periodi.get(s.periodo)!
+    for (let i = 1; i <= 4; i++) {
+      if (s.prezzi[i]) p.prezzi[i].push(s.prezzi[i])
+    }
+  })
+  return Array.from(periodi.entries()).map(([nome, data]) => {
+    const prezziMedi = Object.entries(data.prezzi)
+      .map(([id, arr]) => `App${id} €${arr.length > 0 ? arr[0] : '-'}`)
+      .join(', ')
+    return `- **${nome}**: ${prezziMedi}`
+  }).join('\n')
 })()}
 
-### RIEPILOGO PER PERIODO:
-- **Bassa** (mag-giu, set-ott): App1 €400, App2 €500, App3 €350, App4 €375
-- **Media** (lug 11-31, fine ago-inizio set): App1 €500, App2 €600, App3 €450, App4 €475
-- **Alta** (1-15 ago): App1 €750, App2 €900, App3 €650, App4 €700
-- **Altissima** (Ferragosto 15-22 ago): App1 €850, App2 €1000, App3 €750, App4 €800
-- **Media-Alta** (22-29 ago): App1 €650, App2 €750, App3 €550, App4 €600
-
 ## COSTI EXTRA
+**Fonte dati: ${fonteImpostazioni === 'database' ? '📊 DATABASE (aggiornati)' : '📄 Config file'}**
 - Biancheria: €${costiExtra.biancheria} a persona (set lenzuola + asciugamani)
 - Tassa di soggiorno: €${costiExtra.tassaSoggiorno} a notte per adulto (12-70 anni)
 - Cauzione: €${costiExtra.cauzioneDefault} (restituita al check-out)
@@ -352,9 +455,9 @@ Sei l'assistente AI del proprietario di Villa MareBlu. Hai accesso ai DATI REALI
 
 ### REGOLE PREZZI
 - Prezzo SETTIMANALE (anche per 6 notti = 1 settimana)
-- Tassa soggiorno: €1 × adulti × notti EFFETTIVE
-- Biancheria: €10/persona (opzionale)
-- Acconto: 30%
+- Tassa soggiorno: €${costiExtra.tassaSoggiorno} × adulti × notti EFFETTIVE
+- Biancheria: €${costiExtra.biancheria}/persona (opzionale)
+- Acconto: ${costiExtra.accontoPercentuale}%
 
 ## NOTE RAPIDE
 - Settimana incompleta (6 notti) = prezzo settimana intera
