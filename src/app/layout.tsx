@@ -13,6 +13,16 @@ export const metadata: Metadata = {
   title: 'Villa MareBlu Manager',
   description: 'Gestionale per affitti turistici Villa MareBlu',
   manifest: '/manifest.json',
+  // Blocca indicizzazione motori di ricerca
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

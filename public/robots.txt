@@ -1,0 +1,27 @@
+# Blocca tutti i motori di ricerca
+User-agent: *
+Disallow: /
+
+# Blocca specificamente Google
+User-agent: Googlebot
+Disallow: /
+
+# Blocca Bing
+User-agent: Bingbot
+Disallow: /
+
+# Blocca Yahoo
+User-agent: Slurp
+Disallow: /
+
+# Blocca DuckDuckGo
+User-agent: DuckDuckBot
+Disallow: /
+
+# Blocca Yandex
+User-agent: YandexBot
+Disallow: /
+
+# Blocca Baidu
+User-agent: Baiduspider
+Disallow: /
