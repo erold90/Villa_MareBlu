@@ -113,3 +113,17 @@ Lo script salva un log di tutte le operazioni in `log.txt`.
 - Non abusare dello script: Facebook potrebbe limitare il tuo account
 - Rispetta le regole dei gruppi
 - Varia i tempi se posti frequentemente
+
+## Sicurezza
+
+**IMPORTANTE:** La cartella `chrome-profile/` viene creata automaticamente dallo script e contiene:
+- Cookie di sessione Facebook
+- Password salvate
+- Cronologia di navigazione
+
+**NON committare mai questa cartella su GitHub!** È già esclusa nel `.gitignore`.
+
+Se hai precedentemente committato questa cartella, devi:
+1. Eliminare tutti i cookie/password dal browser
+2. Cambiare la password di Facebook
+3. Ricreare il profilo localmente

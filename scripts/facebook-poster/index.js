@@ -97,11 +97,9 @@ const CONFIG = {
 
 // ============================================
 // MESSAGGIO DA POSTARE
+// Nota: I codici CIN vanno configurati localmente, non committare su GitHub
 // ============================================
-const MESSAGGIO = `CIN: IT075060C200036553 🔑
-CIN: IT075060C200072190 🔑
-⠀
-🏡 VILLA MAREBLU
+const MESSAGGIO = `🏡 VILLA MAREBLU
 ⠀
 Benvenuti a Villa MareBlu, nella quiete del Salento tra Santa Maria di Leuca e Torre Vado.
 Vista panoramica sul Mar Ionio.
