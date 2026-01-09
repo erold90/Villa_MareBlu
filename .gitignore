@@ -49,6 +49,14 @@ prisma/dev.db-journal
 # vercel
 .vercel
 
+# Chrome profile (contiene dati sensibili come cookies e password)
+chrome-profile/
+**/chrome-profile/
+
+# Log files
+*.log
+log.txt
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

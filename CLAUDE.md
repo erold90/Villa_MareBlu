@@ -41,15 +41,17 @@ Sistema gestionale **PRIVATO** per la gestione di Villa MareBlu:
 | Campo | Valore |
 |-------|--------|
 | **Nome** | Villa MareBlu |
-| **Indirizzo** | Via Marco Polo 112, Patù (LE) 73053 |
-| **Coordinate GPS** | 39.823534, 18.292820 |
-| **Telefono** | +39 393 776 7749 |
-| **Email** | macchiaforcato@gmail.com |
-| **WhatsApp** | https://api.whatsapp.com/send?phone=393937767749 |
+| **Indirizzo** | *(configurare in .env.local)* |
+| **Coordinate GPS** | *(configurare in .env.local)* |
+| **Telefono** | *(configurare in .env.local)* |
+| **Email** | *(configurare in .env.local)* |
+| **WhatsApp** | *(configurare in .env.local)* |
 | **Sito pubblico** | https://villamareblu.it |
-| **CIS** | LE07506091000031728 |
-| **CIN** | IT07560C200036553 / IT075060C200072190 |
+| **CIS** | *(configurare in .env.local)* |
+| **CIN** | *(configurare in .env.local)* |
 | **Orari contatto** | Lun-Ven 09:00-18:00, Sab 09:00-13:00 |
+
+> **NOTA SICUREZZA:** I dati personali (indirizzo, telefono, email, CIS/CIN) NON devono essere committati su GitHub. Configurarli localmente in `.env.local`.
 
 ### Social Media
 - **Facebook:** https://www.facebook.com/villamareblu
