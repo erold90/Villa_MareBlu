@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "sync-prices": "npx tsx scripts/sync-prices-to-supabase.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -18,6 +19,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
     "@prisma/client": "^5.22.0",
+    "@supabase/supabase-js": "^2.90.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "jspdf": "^3.0.4",
