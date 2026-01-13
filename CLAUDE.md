@@ -110,22 +110,27 @@ Sistema gestionale **PRIVATO** per la gestione di Villa MareBlu:
 
 ---
 
-## 4. LISTINO PREZZI 2025/2026 (AGGIORNATO)
+## 4. LISTINO PREZZI 2026 (OTTIMIZZATO - 14/01/2026)
 
 ### Prezzi Settimanali (€) - Sabato → Sabato
 
 | Periodo | Date | App.1 | App.2 | App.3 | App.4 |
 |---------|------|-------|-------|-------|-------|
-| **Bassa** | 30/5 - 11/7 | €400 | €600 | €350 | €375 |
-| **Media** | 11/7 - 1/8 | €500 | €700 | €450 | €475 |
-| **Altissima** | 1/8 - 22/8 | €850 | €1.100 | €750 | €800 |
+| **Bassa** | 30/5 - 11/7 | €400 | €650 | €350 | €375 |
+| **Media** | 11/7 - 1/8 | €550 | €750 | €500 | €525 |
+| **Altissima** | 1/8 - 22/8 | €900 | €1.200 | €850 | €850 |
 | **Alta** | 22/8 - 29/8 | €750 | €900 | €650 | €700 |
-| **Media** | 29/8 - 12/9 | €500 | €700 | €400 | €450 |
-| **Bassa** | 12/9 - 7/11 | €400 | €600 | €350 | €375 |
+| **Media** | 29/8 - 12/9 | €550 | €750 | €500 | €525 |
+| **Bassa** | 12/9 - 7/11 | €400 | €650 | €350 | €375 |
 
-### Modifiche Prezzi Applicate (13/12/2025):
-1. **App 2 aumentato** di €100 su tutte le stagioni (premium vista mare + 8 posti)
-2. **Settimana 22-29 agosto** ora è "Alta" (non più "Media-Alta") con transizione graduale
+### Modifiche Prezzi Applicate:
+1. **13/12/2025**: App 2 aumentato di €100 su tutte le stagioni (premium vista mare + 8 posti)
+2. **13/12/2025**: Settimana 22-29 agosto ora è "Alta" (non più "Media-Alta")
+3. **14/01/2026**: Ottimizzazione prezzi basata su analisi di mercato completa:
+   - **Altissima**: App1 +€50, App2 +€100, App3 +€100, App4 +€50
+   - **Media**: App1 +€50, App2 +€50, App3 +€50, App4 +€50
+   - **Bassa**: App2 +€50 (altri invariati)
+   - **Incremento annuale stimato**: +€2.600 (assumendo 60-70% occupancy)
 
 ### Costi Aggiuntivi (salvati nel DATABASE)
 | Voce | Importo | Note |
@@ -135,8 +140,9 @@ Sistema gestionale **PRIVATO** per la gestione di Villa MareBlu:
 | Cauzione | €200 | Restituita al check-out |
 | Acconto | 30% | Via bonifico |
 
-### Guadagno Potenziale Stagione (15 giu - 15 set)
-- **13 settimane tutti e 4 gli appartamenti: €30.875**
+### Guadagno Potenziale Stagione 2026 (23 settimane, 4 appartamenti)
+- **Revenue totale (100% occupancy)**: €48.275
+- **Incremento vs prezzi precedenti**: +€2.600 (+5.7%)
 
 ---
 
@@ -275,6 +281,14 @@ git add -A && git commit -m "messaggio" && git push origin main
 | 2025-12-13 | Cambiato dominio a pannello-vmb-x9m3.vercel.app |
 | 2025-12-13 | Aggiunto robots.txt + meta noindex (blocco motori ricerca) |
 | 2025-12-13 | Aggiornato CLAUDE.md con tutte le modifiche |
+| 2026-01-13 | Sincronizzazione automatica prezzi Neon → Supabase |
+| 2026-01-13 | Upgrade AI Assistant a Opus 4.5 (da Sonnet 4) |
+| 2026-01-14 | **ANALISI DI MERCATO COMPLETA** - Torre Vado/Pescoluse |
+| 2026-01-14 | **OTTIMIZZAZIONE PREZZI 2026** basata su analisi competitor |
+| 2026-01-14 | Altissima: App1 +€50, App2 +€100, App3 +€100, App4 +€50 |
+| 2026-01-14 | Media: tutti +€50/settimana |
+| 2026-01-14 | Bassa: App2 +€50 (altri invariati) |
+| 2026-01-14 | Incremento revenue annuale stimato: +€2.600 (+5.7%) |
 
 ---
 

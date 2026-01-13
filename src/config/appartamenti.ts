@@ -87,34 +87,34 @@ export function getSettimanePerAnno(anno: number) {
   // Calcola i sabati della stagione (da fine maggio a inizio novembre)
   const settimane = [
     // Bassa stagione - Maggio/Giugno
-    { num: 1, inizio: `${anno}-05-30`, fine: `${anno}-06-06`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 2, inizio: `${anno}-06-06`, fine: `${anno}-06-13`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 3, inizio: `${anno}-06-13`, fine: `${anno}-06-20`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 4, inizio: `${anno}-06-20`, fine: `${anno}-06-27`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 5, inizio: `${anno}-06-27`, fine: `${anno}-07-04`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 6, inizio: `${anno}-07-04`, fine: `${anno}-07-11`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
+    { num: 1, inizio: `${anno}-05-30`, fine: `${anno}-06-06`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 2, inizio: `${anno}-06-06`, fine: `${anno}-06-13`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 3, inizio: `${anno}-06-13`, fine: `${anno}-06-20`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 4, inizio: `${anno}-06-20`, fine: `${anno}-06-27`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 5, inizio: `${anno}-06-27`, fine: `${anno}-07-04`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 6, inizio: `${anno}-07-04`, fine: `${anno}-07-11`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
     // Media stagione - Luglio
-    { num: 7, inizio: `${anno}-07-11`, fine: `${anno}-07-18`, periodo: 'Media', prezzi: { 1: 500, 2: 700, 3: 450, 4: 475 } },
-    { num: 8, inizio: `${anno}-07-18`, fine: `${anno}-07-25`, periodo: 'Media', prezzi: { 1: 500, 2: 700, 3: 450, 4: 475 } },
-    { num: 9, inizio: `${anno}-07-25`, fine: `${anno}-08-01`, periodo: 'Media', prezzi: { 1: 500, 2: 700, 3: 450, 4: 475 } },
+    { num: 7, inizio: `${anno}-07-11`, fine: `${anno}-07-18`, periodo: 'Media', prezzi: { 1: 550, 2: 750, 3: 500, 4: 525 } },
+    { num: 8, inizio: `${anno}-07-18`, fine: `${anno}-07-25`, periodo: 'Media', prezzi: { 1: 550, 2: 750, 3: 500, 4: 525 } },
+    { num: 9, inizio: `${anno}-07-25`, fine: `${anno}-08-01`, periodo: 'Media', prezzi: { 1: 550, 2: 750, 3: 500, 4: 525 } },
     // Altissima stagione - Agosto (incluso pre-Ferragosto)
-    { num: 10, inizio: `${anno}-08-01`, fine: `${anno}-08-08`, periodo: 'Altissima', prezzi: { 1: 850, 2: 1100, 3: 750, 4: 800 } },
-    { num: 11, inizio: `${anno}-08-08`, fine: `${anno}-08-15`, periodo: 'Altissima', prezzi: { 1: 850, 2: 1100, 3: 750, 4: 800 } },
+    { num: 10, inizio: `${anno}-08-01`, fine: `${anno}-08-08`, periodo: 'Altissima', prezzi: { 1: 900, 2: 1200, 3: 850, 4: 850 } },
+    { num: 11, inizio: `${anno}-08-08`, fine: `${anno}-08-15`, periodo: 'Altissima', prezzi: { 1: 900, 2: 1200, 3: 850, 4: 850 } },
     // Altissima stagione - Ferragosto
-    { num: 12, inizio: `${anno}-08-15`, fine: `${anno}-08-22`, periodo: 'Altissima', prezzi: { 1: 850, 2: 1100, 3: 750, 4: 800 } },
+    { num: 12, inizio: `${anno}-08-15`, fine: `${anno}-08-22`, periodo: 'Altissima', prezzi: { 1: 900, 2: 1200, 3: 850, 4: 850 } },
     // Post-Ferragosto (transizione graduale)
     { num: 13, inizio: `${anno}-08-22`, fine: `${anno}-08-29`, periodo: 'Alta', prezzi: { 1: 750, 2: 900, 3: 650, 4: 700 } },
-    { num: 14, inizio: `${anno}-08-29`, fine: `${anno}-09-05`, periodo: 'Media', prezzi: { 1: 500, 2: 700, 3: 400, 4: 450 } },
-    { num: 15, inizio: `${anno}-09-05`, fine: `${anno}-09-12`, periodo: 'Media', prezzi: { 1: 500, 2: 700, 3: 400, 4: 450 } },
+    { num: 14, inizio: `${anno}-08-29`, fine: `${anno}-09-05`, periodo: 'Media', prezzi: { 1: 550, 2: 750, 3: 500, 4: 525 } },
+    { num: 15, inizio: `${anno}-09-05`, fine: `${anno}-09-12`, periodo: 'Media', prezzi: { 1: 550, 2: 750, 3: 500, 4: 525 } },
     // Bassa stagione - Settembre/Ottobre
-    { num: 16, inizio: `${anno}-09-12`, fine: `${anno}-09-19`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 17, inizio: `${anno}-09-19`, fine: `${anno}-09-26`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 18, inizio: `${anno}-09-26`, fine: `${anno}-10-03`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 19, inizio: `${anno}-10-03`, fine: `${anno}-10-10`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 20, inizio: `${anno}-10-10`, fine: `${anno}-10-17`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 21, inizio: `${anno}-10-17`, fine: `${anno}-10-24`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 22, inizio: `${anno}-10-24`, fine: `${anno}-10-31`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
-    { num: 23, inizio: `${anno}-10-31`, fine: `${anno}-11-07`, periodo: 'Bassa', prezzi: { 1: 400, 2: 600, 3: 350, 4: 375 } },
+    { num: 16, inizio: `${anno}-09-12`, fine: `${anno}-09-19`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 17, inizio: `${anno}-09-19`, fine: `${anno}-09-26`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 18, inizio: `${anno}-09-26`, fine: `${anno}-10-03`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 19, inizio: `${anno}-10-03`, fine: `${anno}-10-10`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 20, inizio: `${anno}-10-10`, fine: `${anno}-10-17`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 21, inizio: `${anno}-10-17`, fine: `${anno}-10-24`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 22, inizio: `${anno}-10-24`, fine: `${anno}-10-31`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
+    { num: 23, inizio: `${anno}-10-31`, fine: `${anno}-11-07`, periodo: 'Bassa', prezzi: { 1: 400, 2: 650, 3: 350, 4: 375 } },
   ]
   return settimane
 }
