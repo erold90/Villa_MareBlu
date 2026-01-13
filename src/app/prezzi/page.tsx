@@ -42,8 +42,10 @@ export default function PrezziPage() {
   const [data, setData] = useState<PrezziData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [syncStatus, setSyncStatus] = useState<string | null>(null)
   const [annoSelezionato, setAnnoSelezionato] = useState<number>(getStagioneCorrente())
   const [editingSettimana, setEditingSettimana] = useState<number | null>(null)
   const [editedPrezzi, setEditedPrezzi] = useState<Record<number, number>>({})
@@ -102,6 +104,7 @@ export default function PrezziPage() {
       setSaving(true)
       setError(null)
       setSuccess(null)
+      setSyncStatus(null)
 
       const response = await fetch('/api/prezzi', {
         method: 'PUT',
@@ -124,8 +127,41 @@ export default function PrezziPage() {
       // Ricarica i dati
       await fetchPrezzi()
 
-      // Nascondi messaggio dopo 3 secondi
-      setTimeout(() => setSuccess(null), 3000)
+      // SINCRONIZZAZIONE AUTOMATICA A SUPABASE
+      setSyncing(true)
+      setSyncStatus('Sincronizzazione con villamareblu.it in corso...')
+
+      try {
+        const syncResponse = await fetch('/api/sync-prices-to-supabase', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ year: annoSelezionato }),
+        })
+
+        if (syncResponse.ok) {
+          const syncData = await syncResponse.json()
+          setSyncStatus(`✅ Sincronizzati ${syncData.synced || 0} prezzi su villamareblu.it`)
+        } else {
+          const syncError = await syncResponse.json()
+          // Se Supabase non è configurato, mostra un messaggio informativo senza errore
+          if (syncError.error?.includes('Configurazione Supabase mancante')) {
+            setSyncStatus('ℹ️ Sincronizzazione Supabase non configurata (opzionale)')
+          } else {
+            setSyncStatus(`⚠️ Errore sync: ${syncError.error || 'Errore sconosciuto'}`)
+          }
+        }
+      } catch (syncErr) {
+        setSyncStatus('⚠️ Errore di rete durante la sincronizzazione')
+        console.error('Sync error:', syncErr)
+      } finally {
+        setSyncing(false)
+      }
+
+      // Nascondi messaggi dopo 5 secondi
+      setTimeout(() => {
+        setSuccess(null)
+        setSyncStatus(null)
+      }, 5000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore nel salvataggio')
     } finally {
@@ -222,20 +258,20 @@ export default function PrezziPage() {
             {/* Bottone salva */}
             <button
               onClick={saveAllPrezzi}
-              disabled={!hasChanges || saving}
+              disabled={!hasChanges || saving || syncing}
               className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors',
-                hasChanges
+                hasChanges && !saving && !syncing
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed'
               )}
             >
-              {saving ? (
+              {(saving || syncing) ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              {saving ? 'Salvataggio...' : 'Salva nel Database'}
+              {saving ? 'Salvataggio...' : syncing ? 'Sincronizzazione...' : 'Salva nel Database'}
             </button>
           </div>
         </div>
@@ -255,13 +291,37 @@ export default function PrezziPage() {
           </div>
         )}
 
+        {syncStatus && (
+          <div className={cn(
+            'p-4 rounded-lg flex items-center gap-3',
+            syncing ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' :
+            syncStatus.includes('✅') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
+            syncStatus.includes('ℹ️') ? 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-400' :
+            'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+          )}>
+            {syncing ? (
+              <Loader2 className="w-5 h-5 flex-shrink-0 animate-spin" />
+            ) : syncStatus.includes('✅') ? (
+              <Check className="w-5 h-5 flex-shrink-0" />
+            ) : syncStatus.includes('ℹ️') ? (
+              <Info className="w-5 h-5 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            )}
+            {syncStatus}
+          </div>
+        )}
+
         {/* Info */}
         <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 p-4 rounded-lg flex items-start gap-3">
           <Info className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div className="text-sm">
             <p className="font-medium">Come funziona</p>
             <p className="mt-1 text-blue-600 dark:text-blue-300">
-              Clicca su una riga per modificare i prezzi. Le modifiche vengono salvate nel database solo quando clicchi &quot;Salva nel Database&quot;.
+              Clicca su una riga per modificare i prezzi. Le modifiche vengono salvate nel database quando clicchi &quot;Salva nel Database&quot;.
+            </p>
+            <p className="mt-1 text-blue-600 dark:text-blue-300 font-medium">
+              ✨ I prezzi vengono sincronizzati automaticamente con villamareblu.it dopo il salvataggio!
             </p>
           </div>
         </div>
