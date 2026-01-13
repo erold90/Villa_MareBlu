@@ -627,8 +627,8 @@ export async function POST(request: NextRequest) {
     const systemPrompt = await generateSystemPrompt()
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024, // Risposte brevi e concise
+      model: 'claude-opus-4-5-20251101',
+      max_tokens: 2048, // Opus 4.5 - risposte più dettagliate
       system: systemPrompt,
       messages: messages.map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
