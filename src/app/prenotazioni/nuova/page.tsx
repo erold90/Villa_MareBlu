@@ -931,14 +931,14 @@ BIC/SWIFT: ${BIC}`
                         type="button"
                         onClick={copyIBAN}
                         className={cn(
-                          "px-3 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap",
+                          "p-2.5 rounded-lg transition-colors",
                           ibanCopied
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-600"
+                            : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300"
                         )}
+                        title="Copia IBAN"
                       >
-                        {ibanCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        {ibanCopied ? 'Copiato!' : 'Copia'}
+                        {ibanCopied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                       </button>
                     </div>
 
@@ -955,14 +955,14 @@ BIC/SWIFT: ${BIC}`
                         onClick={copyCausale}
                         disabled={!causaleAttuale}
                         className={cn(
-                          "px-3 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap",
+                          "p-2.5 rounded-lg transition-colors disabled:opacity-50",
                           causaleCopied
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                            : "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-600"
+                            : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300"
                         )}
+                        title="Copia Causale"
                       >
-                        {causaleCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        {causaleCopied ? 'Copiato!' : 'Copia'}
+                        {causaleCopied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                       </button>
                     </div>
 

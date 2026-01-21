@@ -781,14 +781,14 @@ BIC/SWIFT: HYEEIT22XXX`
                         type="button"
                         onClick={copyIBAN}
                         className={cn(
-                          "px-3 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap",
+                          "p-2.5 rounded-lg transition-colors",
                           ibanCopied
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-600"
+                            : "bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-600 dark:text-gray-300"
                         )}
+                        title="Copia IBAN"
                       >
-                        {ibanCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        {ibanCopied ? 'Copiato!' : 'Copia'}
+                        {ibanCopied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                       </button>
                     </div>
 
@@ -805,14 +805,14 @@ BIC/SWIFT: HYEEIT22XXX`
                         onClick={copyCausaleAcconto}
                         disabled={!generateCausale('acconto')}
                         className={cn(
-                          "px-3 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap",
+                          "p-2.5 rounded-lg transition-colors disabled:opacity-50",
                           causaleCopiedAcconto
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                            : "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-600"
+                            : "bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-600 dark:text-gray-300"
                         )}
+                        title="Copia Causale"
                       >
-                        {causaleCopiedAcconto ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        {causaleCopiedAcconto ? 'Copiato!' : 'Copia'}
+                        {causaleCopiedAcconto ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                       </button>
                     </div>
 
@@ -892,100 +892,6 @@ BIC/SWIFT: HYEEIT22XXX`
               </div>
             </div>
 
-            {/* Dettagli Saldo */}
-            <div className="mt-4 p-4 border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 rounded-xl">
-              <div className="flex items-center gap-2 mb-4">
-                <CreditCard className="w-5 h-5 text-green-600" />
-                <h3 className="font-semibold text-gray-900 dark:text-white">Dettagli Bonifico Saldo</h3>
-              </div>
-
-              <div className="space-y-4">
-                {/* Causale Saldo */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Causale Bonifico Saldo
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      name="saldoCausale"
-                      value={formData.saldoCausale}
-                      onChange={handleChange}
-                      placeholder={generateCausale('saldo') || 'VMB-SALDO-APP1-01GEN2026-COGNOME'}
-                      className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white font-mono text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const causale = formData.saldoCausale || generateCausale('saldo')
-                        if (!formData.saldoCausale) {
-                          setFormData(prev => ({ ...prev, saldoCausale: causale }))
-                        }
-                        copyCausale(causale, 'saldo')
-                      }}
-                      className="px-3 py-2.5 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg transition-colors"
-                      title="Copia causale"
-                    >
-                      {copiedSaldo ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5 text-gray-600 dark:text-gray-300" />}
-                    </button>
-                    {!formData.saldoCausale && (
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, saldoCausale: generateCausale('saldo') }))}
-                        className="px-3 py-2.5 bg-green-100 dark:bg-green-800 hover:bg-green-200 dark:hover:bg-green-700 text-green-700 dark:text-green-200 rounded-lg transition-colors text-sm"
-                      >
-                        Genera
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {formData.saldoPagato && (
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Data Bonifico Saldo
-                      </label>
-                      <input
-                        type="date"
-                        name="saldoDataBonifico"
-                        value={formData.saldoDataBonifico}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Nome Pagante Saldo
-                      </label>
-                      <input
-                        type="text"
-                        name="saldoNomePagante"
-                        value={formData.saldoNomePagante}
-                        onChange={handleChange}
-                        placeholder="Nome e cognome"
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        CRO / Riferimento Saldo
-                      </label>
-                      <input
-                        type="text"
-                        name="saldoRiferimento"
-                        value={formData.saldoRiferimento}
-                        onChange={handleChange}
-                        placeholder="Codice riferimento"
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white font-mono text-sm"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* Extra: Animali e Biancheria */}
