@@ -1,32 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
-/**
- * Sincronizza una prenotazione con Supabase (villamareblu.it)
- * Chiamata in background, non blocca la risposta
- */
-async function syncToSupabase(prenotazioneId: number, action: 'sync' | 'delete' = 'sync') {
-  try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXTAUTH_URL || 'http://localhost:3000'
-
-    const response = await fetch(`${baseUrl}/api/sync-reservations-to-supabase`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prenotazioneId, action }),
-    })
-
-    const result = await response.json()
-    if (result.success) {
-      console.log(`[SYNC] ✅ Prenotazione ${prenotazioneId} sincronizzata con villamareblu.it`)
-    } else {
-      console.error(`[SYNC] ❌ Errore sync prenotazione ${prenotazioneId}:`, result.error)
-    }
-  } catch (error) {
-    console.error(`[SYNC] ❌ Errore chiamata sync:`, error)
-  }
-}
+import { syncReservationToSupabase } from '@/lib/supabase-sync'
 
 export async function POST(request: NextRequest) {
   try {
@@ -146,7 +120,8 @@ export async function POST(request: NextRequest) {
       prenotazioniCreate.push(prenotazione)
 
       // Sincronizza con Supabase (villamareblu.it) in background
-      syncToSupabase(prenotazione.id, 'sync').catch(console.error)
+      // Usa utility diretta invece di fetch() per evitare problemi con VERCEL_URL
+      syncReservationToSupabase(prenotazione, prenotazione.ospite).catch(console.error)
     }
 
     return NextResponse.json(prenotazioniCreate, { status: 201 })
