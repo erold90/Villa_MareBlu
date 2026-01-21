@@ -78,6 +78,7 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
     ospiteCognome: '',
     ospiteEmail: '',
     ospiteTelefono: '',
+    telefonoDaChiedere: false,
     ospiteNazione: 'Italia',
     ospiteId: 0,
     numAdulti: 2,
@@ -146,6 +147,7 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
           ospiteCognome: data.ospite.cognome,
           ospiteEmail: data.ospite.email || '',
           ospiteTelefono: data.ospite.telefono || '',
+          telefonoDaChiedere: !data.ospite.telefono || data.ospite.telefono.trim() === '',
           ospiteNazione: data.ospite.nazione || 'Italia',
           ospiteId: data.ospiteId,
           numAdulti: data.numAdulti,
@@ -203,9 +205,22 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
+    const isCheckbox = type === 'checkbox'
+    const newValue = isCheckbox ? (e.target as HTMLInputElement).checked : value
+
+    // Se si spunta "Da chiedere", svuota il campo telefono
+    if (name === 'telefonoDaChiedere' && newValue === true) {
+      setFormData((prev) => ({
+        ...prev,
+        telefonoDaChiedere: true,
+        ospiteTelefono: '', // Svuota il telefono
+      }))
+      return
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+      [name]: newValue,
     }))
   }
 
@@ -520,16 +535,34 @@ BIC/SWIFT: HYEEIT22XXX`
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Telefono
-                </label>
-                <input
-                  type="tel"
-                  name="ospiteTelefono"
-                  value={formData.ospiteTelefono}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Telefono {!formData.telefonoDaChiedere && '*'}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="telefonoDaChiedere"
+                      checked={formData.telefonoDaChiedere}
+                      onChange={handleChange}
+                      className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                    />
+                    Da chiedere
+                  </label>
+                </div>
+                {formData.telefonoDaChiedere ? (
+                  <div className="px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg text-amber-700 dark:text-amber-300 text-sm">
+                    Telefono da richiedere al cliente
+                  </div>
+                ) : (
+                  <input
+                    type="tel"
+                    name="ospiteTelefono"
+                    value={formData.ospiteTelefono}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  />
+                )}
               </div>
 
               <div>

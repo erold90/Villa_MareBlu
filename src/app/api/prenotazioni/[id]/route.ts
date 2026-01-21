@@ -42,14 +42,15 @@ export async function PUT(
     const body = await request.json()
 
     // Aggiorna i dati dell'ospite se forniti
-    if (body.ospiteId && (body.ospiteNome || body.ospiteCognome || body.ospiteEmail || body.ospiteTelefono)) {
+    // Nota: ospiteTelefono può essere stringa vuota (da chiedere), quindi controlliamo solo nome/cognome
+    if (body.ospiteId && (body.ospiteNome || body.ospiteCognome)) {
       await prisma.ospite.update({
         where: { id: body.ospiteId },
         data: {
           nome: body.ospiteNome,
           cognome: body.ospiteCognome,
           email: body.ospiteEmail || null,
-          telefono: body.ospiteTelefono || null,
+          telefono: body.ospiteTelefono || null, // Può essere vuoto se "Da chiedere"
           nazione: body.ospiteNazione || 'Italia',
         },
       })
