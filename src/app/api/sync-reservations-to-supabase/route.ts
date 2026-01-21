@@ -9,7 +9,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 
 interface SupabaseReservation {
   id: string
-  apartment_ids: number[]
+  apartment_ids: string[]  // Formato: ["appartamento-1", "appartamento-2", ...]
   guest_name: string
   guest_phone: string | null
   start_date: string
@@ -58,7 +58,7 @@ function convertToSupabaseReservation(
 ): SupabaseReservation {
   return {
     id: generateUUID(prenotazione.id),
-    apartment_ids: [prenotazione.appartamentoId],
+    apartment_ids: [`appartamento-${prenotazione.appartamentoId}`],
     guest_name: `${ospite.nome} ${ospite.cognome}`.trim(),
     guest_phone: ospite.telefono || null,
     start_date: new Date(prenotazione.checkIn).toISOString().split('T')[0],
@@ -264,7 +264,7 @@ export async function POST(request: NextRequest) {
       if (!acc[aptId]) acc[aptId] = 0
       acc[aptId]++
       return acc
-    }, {} as Record<number, number>)
+    }, {} as Record<string, number>)
 
     return NextResponse.json({
       success: true,
