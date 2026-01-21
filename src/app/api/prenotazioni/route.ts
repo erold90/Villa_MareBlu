@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
           nome: body.ospiteNome,
           cognome: body.ospiteCognome,
           email: body.ospiteEmail || null,
-          telefono: body.ospiteTelefono || null,
+          telefono: (body.ospiteTelefono && body.ospiteTelefono.toLowerCase() !== 'da chiedere') ? body.ospiteTelefono : null,
           nazione: body.ospiteNazione || 'Italia',
         },
       })
