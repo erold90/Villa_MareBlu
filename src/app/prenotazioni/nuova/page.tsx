@@ -171,9 +171,22 @@ export default function NuovaPrenotazionePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
+    const isCheckbox = type === 'checkbox'
+    const newValue = isCheckbox ? (e.target as HTMLInputElement).checked : value
+
+    // Se si spunta "Da chiedere", svuota il campo telefono
+    if (name === 'telefonoDaChiedere' && newValue === true) {
+      setFormData((prev) => ({
+        ...prev,
+        telefonoDaChiedere: true,
+        ospiteTelefono: '', // Svuota il telefono
+      }))
+      return
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+      [name]: newValue,
     }))
   }
 

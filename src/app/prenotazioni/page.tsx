@@ -331,7 +331,7 @@ export default function PrenotazioniPage() {
                     </div>
                   </div>
                   {/* Pulsante chiamata telefono */}
-                  {pren.ospite.telefono ? (
+                  {pren.ospite.telefono && pren.ospite.telefono.trim() !== '' ? (
                     <a
                       href={`tel:${pren.ospite.telefono}`}
                       className="p-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-800/50 transition-colors"
@@ -340,7 +340,7 @@ export default function PrenotazioniPage() {
                       <Phone className="w-5 h-5" />
                     </a>
                   ) : (
-                    <span className="p-2 bg-gray-100 dark:bg-gray-700 text-gray-400 rounded-lg" title="Telefono da chiedere">
+                    <span className="p-2 bg-gray-100 dark:bg-gray-700 text-gray-400 rounded-lg cursor-not-allowed" title="Telefono da chiedere">
                       <Phone className="w-5 h-5" />
                     </span>
                   )}
