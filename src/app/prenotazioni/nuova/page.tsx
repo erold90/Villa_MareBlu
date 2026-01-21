@@ -451,7 +451,7 @@ export default function NuovaPrenotazionePage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Numero Ospiti</h2>
 
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Adulti</label>
                 <div className="flex items-center gap-3">
@@ -474,11 +474,17 @@ export default function NuovaPrenotazionePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bambini (3-12)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bambini</label>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => handleNumberChange('numBambini', -1)}
+                    onClick={() => {
+                      handleNumberChange('numBambini', -1)
+                      // Se riduci i bambini e numNeonati supera numBambini, riducilo
+                      if (formData.numBambini - 1 < formData.numNeonati) {
+                        setFormData(prev => ({ ...prev, numNeonati: Math.max(0, prev.numBambini - 1) }))
+                      }
+                    }}
                     className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-medium text-gray-900 dark:text-white"
                   >
                     -
@@ -493,33 +499,56 @@ export default function NuovaPrenotazionePage() {
                   </button>
                 </div>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Neonati (0-2)</label>
+            {/* Campo "Di cui senza letto" - visibile solo se ci sono bambini */}
+            {formData.numBambini > 0 && (
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
+                  Di cui senza letto <span className="text-blue-500 font-normal">(dormono in culla o con genitori)</span>
+                </label>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => handleNumberChange('numNeonati', -1)}
-                    className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-medium text-gray-900 dark:text-white"
+                    className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-800 hover:bg-blue-200 dark:hover:bg-blue-700 flex items-center justify-center text-lg font-medium text-blue-900 dark:text-white"
                   >
                     -
                   </button>
-                  <span className="w-10 text-center text-xl font-semibold text-gray-900 dark:text-white">{formData.numNeonati}</span>
+                  <span className="w-10 text-center text-xl font-semibold text-blue-900 dark:text-white">{formData.numNeonati}</span>
                   <button
                     type="button"
-                    onClick={() => handleNumberChange('numNeonati', 1)}
-                    className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-medium text-gray-900 dark:text-white"
+                    onClick={() => {
+                      // Non può superare il numero di bambini
+                      if (formData.numNeonati < formData.numBambini) {
+                        handleNumberChange('numNeonati', 1)
+                      }
+                    }}
+                    disabled={formData.numNeonati >= formData.numBambini}
+                    className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-800 hover:bg-blue-200 dark:hover:bg-blue-700 flex items-center justify-center text-lg font-medium text-blue-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     +
                   </button>
+                  <span className="text-sm text-blue-600 dark:text-blue-400 ml-2">
+                    (max {formData.numBambini})
+                  </span>
                 </div>
+                <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
+                  Questi bambini non occupano posti letto. Culla disponibile su richiesta gratuita.
+                </p>
               </div>
-            </div>
+            )}
 
-            {formData.numNeonati > 0 && (
-              <p className="mt-4 text-sm text-amber-600 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 p-3 rounded-lg">
-                ℹ️ I neonati (0-2 anni) dormono in culla o con i genitori e <strong>non contano</strong> nei posti letto disponibili. Culla disponibile su richiesta gratuita.
-              </p>
+            {/* Riepilogo posti letto */}
+            {(formData.numAdulti > 0 || formData.numBambini > 0) && (
+              <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <strong>Posti letto necessari:</strong> {formData.numAdulti + formData.numBambini - formData.numNeonati}
+                  <span className="text-gray-500 ml-1">
+                    ({formData.numAdulti} adulti + {formData.numBambini - formData.numNeonati} bambini con letto)
+                  </span>
+                </p>
+              </div>
             )}
           </div>
 
@@ -765,6 +794,7 @@ export default function NuovaPrenotazionePage() {
                   <span className="text-gray-400">€</span>
                   <input
                     type="number"
+                    step="any"
                     value={prezziManuali.extra}
                     onChange={(e) => setPrezziManuali(prev => ({ ...prev, extra: parseFloat(e.target.value) || 0 }))}
                     placeholder="0"

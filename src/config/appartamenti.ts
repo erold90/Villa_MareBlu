@@ -215,7 +215,7 @@ export function getPrezziPerAnno(anno: number) {
 export const prezziConfig = getPrezziPerAnno(new Date().getFullYear())
 
 export const costiExtra = {
-  biancheria: 10, // per persona
+  biancheria: 15, // per persona
   tassaSoggiorno: 1, // per adulto per notte (12-70 anni)
   cauzioneDefault: 200,
   accontoPercentuale: 30,
