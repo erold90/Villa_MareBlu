@@ -112,7 +112,7 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
     prezzoSoggiorno: 0,
     biancheriaCosto: 0,
     tassaSoggiorno: 0,
-    extra: 0,
+    sconto: 0, // Valore positivo = sottratto dal totale
     acconto: 0,
   })
 
@@ -164,7 +164,7 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
           prezzoSoggiorno: data.prezzoSoggiorno,
           biancheriaCosto: data.biancheriaCosto,
           tassaSoggiorno: data.tassaSoggiorno,
-          extra: data.prezzoExtra || 0,
+          sconto: Math.abs(data.prezzoExtra || 0), // Converti prezzoExtra negativo in sconto positivo
           acconto: data.acconto,
         })
       } catch (err) {
@@ -186,8 +186,9 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
   const roundToMultipleOf50 = (value: number): number => Math.floor(value / 50) * 50
 
   // Totale finale - tassa soggiorno INCLUSA nel prezzo base (come villamareblu.it)
-  const rawTotaleFinale = prezziManuali.prezzoSoggiorno + prezziManuali.biancheriaCosto + prezziManuali.extra
-  const totaleFinale = roundToMultipleOf50(rawTotaleFinale)
+  // Lo sconto viene sottratto dal totale
+  const rawTotaleFinale = prezziManuali.prezzoSoggiorno + prezziManuali.biancheriaCosto
+  const totaleFinale = rawTotaleFinale - prezziManuali.sconto
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
@@ -248,7 +249,11 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
         },
         body: JSON.stringify({
           ...formData,
-          ...prezziManuali,
+          prezzoSoggiorno: prezziManuali.prezzoSoggiorno,
+          biancheriaCosto: prezziManuali.biancheriaCosto,
+          tassaSoggiorno: prezziManuali.tassaSoggiorno,
+          prezzoExtra: -prezziManuali.sconto, // Sconto come valore negativo
+          acconto: prezziManuali.acconto,
           bianchieriaSets: formData.biancheria ? (formData.numAdulti + formData.numBambini - formData.numNeonati) : 0,
           totale: totaleFinale,
           saldo: totaleFinale - prezziManuali.acconto,
@@ -1004,22 +1009,20 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
                 </span>
               </div>
 
-              {/* Extra / Sconto */}
+              {/* Sconto */}
               <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                <div>
-                  <span className="text-gray-600 dark:text-gray-300">Extra / Sconto</span>
-                  <span className="text-xs text-gray-400 ml-1">(negativo = sconto)</span>
-                </div>
+                <span className="text-gray-600 dark:text-gray-300">Sconto</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400">€</span>
+                  <span className="text-gray-400">- €</span>
                   <input
                     type="number"
                     step="any"
-                    value={prezziManuali.extra}
-                    onChange={(e) => setPrezziManuali(prev => ({ ...prev, extra: parseFloat(e.target.value) || 0 }))}
+                    min="0"
+                    value={prezziManuali.sconto}
+                    onChange={(e) => setPrezziManuali(prev => ({ ...prev, sconto: Math.abs(parseFloat(e.target.value)) || 0 }))}
                     className={cn(
                       "w-28 px-3 py-1.5 border rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white",
-                      prezziManuali.extra < 0 ? "border-green-300 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "border-gray-300 dark:border-gray-600"
+                      prezziManuali.sconto > 0 ? "border-green-300 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "border-gray-300 dark:border-gray-600"
                     )}
                   />
                 </div>

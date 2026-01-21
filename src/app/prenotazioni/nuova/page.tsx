@@ -64,6 +64,7 @@ export default function NuovaPrenotazionePage() {
     prezzoSoggiorno: 0,
     biancheriaCosto: 0,
     tassaSoggiorno: 0,
+    scontoArrotondamento: 0, // Sconto automatico per arrotondare a multipli di €50
     totale: 0,
     acconto: 0,
     saldo: 0,
@@ -74,7 +75,7 @@ export default function NuovaPrenotazionePage() {
     prezzoSoggiorno: 0,
     biancheriaCosto: 0,
     tassaSoggiorno: 0,
-    extra: 0, // Positivo = extra, Negativo = sconto
+    sconto: 0, // Sconto (valore positivo = sottratto dal totale)
     acconto: 0,
   })
 
@@ -82,8 +83,9 @@ export default function NuovaPrenotazionePage() {
   const roundToMultipleOf50 = (value: number): number => Math.floor(value / 50) * 50
 
   // Totale finale calcolato dai prezzi manuali (senza tassa soggiorno, già inclusa)
-  const rawTotaleFinale = prezziManuali.prezzoSoggiorno + prezziManuali.biancheriaCosto + prezziManuali.extra
-  const totaleFinale = roundToMultipleOf50(rawTotaleFinale)
+  // Lo sconto è già preimpostato con l'arrotondamento, quindi il totale = raw - sconto
+  const rawTotaleFinale = prezziManuali.prezzoSoggiorno + prezziManuali.biancheriaCosto
+  const totaleFinale = rawTotaleFinale - prezziManuali.sconto
 
   // Calculate costs when relevant fields change
   useEffect(() => {
@@ -95,6 +97,7 @@ export default function NuovaPrenotazionePage() {
         prezzoSoggiorno: 0,
         biancheriaCosto: 0,
         tassaSoggiorno: 0,
+        scontoArrotondamento: 0,
         totale: 0,
         acconto: 0,
         saldo: 0,
@@ -132,8 +135,12 @@ export default function NuovaPrenotazionePage() {
     const rawTotal = prezzoSoggiorno + biancheriaCosto
     const totale = roundToMultipleOf50(rawTotal)
 
-    // Acconto (30%)
-    const acconto = Math.round(totale * (costiExtra.accontoPercentuale / 100))
+    // Sconto arrotondamento (differenza tra raw e arrotondato)
+    const scontoArrotondamento = rawTotal - totale
+
+    // Acconto (30%) arrotondato a multipli di €50 per difetto
+    const accontoRaw = totale * (costiExtra.accontoPercentuale / 100)
+    const acconto = roundToMultipleOf50(accontoRaw)
     const saldo = totale - acconto
 
     setCalcolati({
@@ -143,6 +150,7 @@ export default function NuovaPrenotazionePage() {
       prezzoSoggiorno,
       biancheriaCosto,
       tassaSoggiorno,
+      scontoArrotondamento,
       totale,
       acconto,
       saldo,
@@ -155,7 +163,7 @@ export default function NuovaPrenotazionePage() {
       prezzoSoggiorno: prev.prezzoSoggiorno === 0 || prev.prezzoSoggiorno === calcolati.prezzoSoggiorno ? calcolati.prezzoSoggiorno : prev.prezzoSoggiorno,
       biancheriaCosto: calcolati.biancheriaCosto, // Sempre sincronizzato con la checkbox biancheria
       tassaSoggiorno: calcolati.tassaSoggiorno, // Sempre sincronizzato con adulti * notti
-      extra: prev.extra, // Mantieni sempre il valore extra/sconto
+      sconto: calcolati.scontoArrotondamento, // Preimpostato con arrotondamento (aggiornabile manualmente)
       acconto: prev.acconto === 0 || prev.acconto === calcolati.acconto ? calcolati.acconto : prev.acconto,
     }))
   }, [calcolati])
@@ -219,7 +227,11 @@ export default function NuovaPrenotazionePage() {
           ...formData,
           accontoCausale: causaleAttuale, // Usa causale generata se non modificata
           prezzi: {
-            ...prezziManuali,
+            prezzoSoggiorno: prezziManuali.prezzoSoggiorno,
+            biancheriaCosto: prezziManuali.biancheriaCosto,
+            tassaSoggiorno: prezziManuali.tassaSoggiorno,
+            prezzoExtra: -prezziManuali.sconto, // Sconto come valore negativo
+            acconto: prezziManuali.acconto,
             totale: totaleFinale,
             saldo: totaleFinale - prezziManuali.acconto,
           },
@@ -779,35 +791,30 @@ export default function NuovaPrenotazionePage() {
                 </span>
               </div>
 
-              {/* Extra / Sconto - Modificabile */}
+              {/* Sconto - Preimpostato con arrotondamento, modificabile */}
               <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
                 <div>
-                  <span className="text-gray-600 dark:text-gray-300">Extra / Sconto</span>
-                  <span className="text-xs text-gray-400 ml-1">(usa valore negativo per sconto)</span>
+                  <span className="text-gray-600 dark:text-gray-300">Sconto</span>
+                  {calcolati.scontoArrotondamento > 0 && prezziManuali.sconto === calcolati.scontoArrotondamento && (
+                    <span className="text-xs text-green-500 ml-1">(arrotondamento)</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400">€</span>
+                  <span className="text-gray-400">- €</span>
                   <input
                     type="number"
                     step="any"
-                    value={prezziManuali.extra}
-                    onChange={(e) => setPrezziManuali(prev => ({ ...prev, extra: parseFloat(e.target.value) || 0 }))}
+                    min="0"
+                    value={prezziManuali.sconto}
+                    onChange={(e) => setPrezziManuali(prev => ({ ...prev, sconto: Math.abs(parseFloat(e.target.value)) || 0 }))}
                     placeholder="0"
                     className={cn(
                       "w-28 px-3 py-1.5 border rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900",
-                      prezziManuali.extra < 0 ? "border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                      prezziManuali.sconto > 0 ? "border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                     )}
                   />
                 </div>
               </div>
-
-              {/* Sconto applicato */}
-              {prezziManuali.extra < 0 && (
-                <div className="flex justify-between py-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-3 rounded-lg">
-                  <span>🎉 Sconto applicato</span>
-                  <span className="font-medium">{formatPrice(prezziManuali.extra)}</span>
-                </div>
-              )}
 
               {/* TOTALE */}
               <div className="flex justify-between py-3 text-lg font-bold border-t-2 border-gray-200 dark:border-gray-600 mt-2 text-gray-900 dark:text-white">
@@ -972,7 +979,7 @@ export default function NuovaPrenotazionePage() {
                     prezzoSoggiorno: calcolati.prezzoSoggiorno,
                     biancheriaCosto: calcolati.biancheriaCosto,
                     tassaSoggiorno: calcolati.tassaSoggiorno,
-                    extra: 0,
+                    sconto: calcolati.scontoArrotondamento,
                     acconto: calcolati.acconto,
                   })
                 }}
