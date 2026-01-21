@@ -186,18 +186,35 @@ export default function NuovaPrenotazionePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [causaleCopied, setCausaleCopied] = useState(false)
+  const [datiBonificoCopied, setDatiBonificoCopied] = useState(false)
 
   // Genera causale automatica: VMB-APP{n}-{DDMMMYYYY}-{COGNOME}
+  // Genera causale: ACCVMBAPP{n}{DDin}{MMin}{DDout}{MMout}
+  // Esempio: ACCVMBAPP209081608 = App2, dal 09/08 al 16/08
   const generateCausale = () => {
-    if (!formData.checkIn || formData.appartamentiIds.length === 0 || !formData.ospiteCognome) {
+    if (!formData.checkIn || !formData.checkOut || formData.appartamentiIds.length === 0) {
       return ''
     }
     const appIds = formData.appartamentiIds.sort().join('')
     const checkInDate = new Date(formData.checkIn)
-    const mesi = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC']
-    const dataStr = `${checkInDate.getDate().toString().padStart(2, '0')}${mesi[checkInDate.getMonth()]}${checkInDate.getFullYear()}`
-    const cognome = formData.ospiteCognome.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 10)
-    return `VMB-APP${appIds}-${dataStr}-${cognome}`
+    const checkOutDate = new Date(formData.checkOut)
+    const ddIn = checkInDate.getDate().toString().padStart(2, '0')
+    const mmIn = (checkInDate.getMonth() + 1).toString().padStart(2, '0')
+    const ddOut = checkOutDate.getDate().toString().padStart(2, '0')
+    const mmOut = (checkOutDate.getMonth() + 1).toString().padStart(2, '0')
+    return `ACCVMBAPP${appIds}${ddIn}${mmIn}${ddOut}${mmOut}`
+  }
+
+  // Genera testo completo dati bonifico per il cliente
+  const generateDatiBonifico = () => {
+    const causale = causaleAttuale
+    if (!causale) return ''
+    return `Intestatario: Lo Re Daniele
+IBAN: IT65V3677222300OEM002615062
+Banca: HYPE - Banca Sella
+Causale: ${causale}
+
+BIC/SWIFT: HYEEIT22XXX`
   }
 
   // Causale attuale (auto-generata o manuale)
@@ -209,6 +226,16 @@ export default function NuovaPrenotazionePage() {
       navigator.clipboard.writeText(causaleAttuale)
       setCausaleCopied(true)
       setTimeout(() => setCausaleCopied(false), 2000)
+    }
+  }
+
+  // Copia dati bonifico completi negli appunti
+  const copyDatiBonifico = () => {
+    const dati = generateDatiBonifico()
+    if (dati) {
+      navigator.clipboard.writeText(dati)
+      setDatiBonificoCopied(true)
+      setTimeout(() => setDatiBonificoCopied(false), 2000)
     }
   }
 
@@ -875,37 +902,35 @@ export default function NuovaPrenotazionePage() {
                   </div>
                 </div>
 
-                {/* Causale bonifico (sempre visibile) */}
+                {/* Dati bonifico per il cliente */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Causale bonifico
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Dati bonifico per il cliente
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      name="accontoCausale"
-                      value={causaleAttuale}
-                      onChange={(e) => setFormData(prev => ({ ...prev, accontoCausale: e.target.value }))}
-                      placeholder="Generata automaticamente..."
-                      className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={copyCausale}
-                      disabled={!causaleAttuale}
-                      className={cn(
-                        "px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2",
-                        causaleCopied
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                      )}
-                    >
-                      {causaleCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                      {causaleCopied ? 'Copiata!' : 'Copia'}
-                    </button>
+
+                  {/* Preview dati bonifico */}
+                  <div className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg mb-2 font-mono text-xs text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                    {generateDatiBonifico() || 'Compila appartamento e date per generare...'}
                   </div>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Comunica questa causale al cliente per il bonifico dell&apos;acconto
+
+                  {/* Bottone copia dati completi */}
+                  <button
+                    type="button"
+                    onClick={copyDatiBonifico}
+                    disabled={!causaleAttuale}
+                    className={cn(
+                      "w-full py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium",
+                      datiBonificoCopied
+                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                        : "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
+                    )}
+                  >
+                    {datiBonificoCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {datiBonificoCopied ? 'Copiato!' : 'Copia dati bonifico'}
+                  </button>
+
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Incolla questo testo nella chat con il cliente
                   </p>
                 </div>
 

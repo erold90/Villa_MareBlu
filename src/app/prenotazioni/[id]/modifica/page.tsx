@@ -103,9 +103,11 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
     saldoRiferimento: '',
   })
 
-  // Stato per copia causale
+  // Stato per copia causale e dati bonifico
   const [copiedAcconto, setCopiedAcconto] = useState(false)
   const [copiedSaldo, setCopiedSaldo] = useState(false)
+  const [copiedDatiBonificoAcconto, setCopiedDatiBonificoAcconto] = useState(false)
+  const [copiedDatiBonificoSaldo, setCopiedDatiBonificoSaldo] = useState(false)
 
   // Prezzi manuali
   const [prezziManuali, setPrezziManuali] = useState({
@@ -221,19 +223,52 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
     }
   }
 
-  // Genera causale automatica
+  // Copia dati bonifico completi
+  const copyDatiBonifico = async (tipo: 'acconto' | 'saldo') => {
+    const dati = generateDatiBonifico(tipo)
+    if (!dati) return
+    try {
+      await navigator.clipboard.writeText(dati)
+      if (tipo === 'acconto') {
+        setCopiedDatiBonificoAcconto(true)
+        setTimeout(() => setCopiedDatiBonificoAcconto(false), 2000)
+      } else {
+        setCopiedDatiBonificoSaldo(true)
+        setTimeout(() => setCopiedDatiBonificoSaldo(false), 2000)
+      }
+    } catch (err) {
+      console.error('Errore copia:', err)
+    }
+  }
+
+  // Genera causale: ACCVMBAPP{n}{DDin}{MMin}{DDout}{MMout} o SALVMBAPP{n}{DDin}{MMin}{DDout}{MMout}
+  // Genera causale: ACCVMBAPP{n}{DDin}{MMin}{DDout}{MMout} o SALVMBAPP{n}{DDin}{MMin}{DDout}{MMout}
   const generateCausale = (tipo: 'acconto' | 'saldo') => {
-    if (!formData.checkIn || !formData.ospiteCognome || !prenotazione) return ''
+    if (!formData.checkIn || !formData.checkOut || !prenotazione) return ''
 
     const checkInDate = new Date(formData.checkIn)
-    const mesi = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC']
-    const giorno = checkInDate.getDate().toString().padStart(2, '0')
-    const mese = mesi[checkInDate.getMonth()]
-    const anno = checkInDate.getFullYear()
-    const cognome = formData.ospiteCognome.toUpperCase().replace(/\s+/g, '')
-    const prefisso = tipo === 'acconto' ? 'VMB' : 'VMB-SALDO'
+    const checkOutDate = new Date(formData.checkOut)
+    const ddIn = checkInDate.getDate().toString().padStart(2, '0')
+    const mmIn = (checkInDate.getMonth() + 1).toString().padStart(2, '0')
+    const ddOut = checkOutDate.getDate().toString().padStart(2, '0')
+    const mmOut = (checkOutDate.getMonth() + 1).toString().padStart(2, '0')
+    const prefisso = tipo === 'acconto' ? 'ACC' : 'SAL'
 
-    return `${prefisso}-APP${prenotazione.appartamentoId}-${giorno}${mese}${anno}-${cognome}`
+    return `${prefisso}VMBAPP${prenotazione.appartamentoId}${ddIn}${mmIn}${ddOut}${mmOut}`
+  }
+
+  // Genera testo completo dati bonifico per il cliente
+  const generateDatiBonifico = (tipo: 'acconto' | 'saldo') => {
+    const causale = tipo === 'acconto'
+      ? (formData.accontoCausale || generateCausale('acconto'))
+      : (formData.saldoCausale || generateCausale('saldo'))
+    if (!causale) return ''
+    return `Intestatario: Lo Re Daniele
+IBAN: IT65V3677222300OEM002615062
+Banca: HYPE - Banca Sella
+Causale: ${causale}
+
+BIC/SWIFT: HYEEIT22XXX`
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -677,44 +712,28 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
               </div>
 
               <div className="space-y-4">
-                {/* Causale */}
+                {/* Dati bonifico per il cliente */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Causale Bonifico
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Dati bonifico per il cliente
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      name="accontoCausale"
-                      value={formData.accontoCausale}
-                      onChange={handleChange}
-                      placeholder={generateCausale('acconto') || 'VMB-APP1-01GEN2026-COGNOME'}
-                      className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white font-mono text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const causale = formData.accontoCausale || generateCausale('acconto')
-                        if (!formData.accontoCausale) {
-                          setFormData(prev => ({ ...prev, accontoCausale: causale }))
-                        }
-                        copyCausale(causale, 'acconto')
-                      }}
-                      className="px-3 py-2.5 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg transition-colors"
-                      title="Copia causale"
-                    >
-                      {copiedAcconto ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5 text-gray-600 dark:text-gray-300" />}
-                    </button>
-                    {!formData.accontoCausale && (
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, accontoCausale: generateCausale('acconto') }))}
-                        className="px-3 py-2.5 bg-blue-100 dark:bg-blue-800 hover:bg-blue-200 dark:hover:bg-blue-700 text-blue-700 dark:text-blue-200 rounded-lg transition-colors text-sm"
-                      >
-                        Genera
-                      </button>
-                    )}
+                  <div className="p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg mb-2 font-mono text-xs text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                    {generateDatiBonifico('acconto') || 'Compila le date per generare...'}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => copyDatiBonifico('acconto')}
+                    disabled={!generateCausale('acconto')}
+                    className={cn(
+                      "w-full py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium",
+                      copiedDatiBonificoAcconto
+                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                        : "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
+                    )}
+                  >
+                    {copiedDatiBonificoAcconto ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copiedDatiBonificoAcconto ? 'Copiato!' : 'Copia dati bonifico'}
+                  </button>
                 </div>
 
                 {formData.accontoPagato && (
