@@ -26,6 +26,7 @@ export default function NuovaPrenotazionePage() {
     ospiteCognome: '',
     ospiteEmail: '',
     ospiteTelefono: '',
+    telefonoDaChiedere: false,
     ospiteNazione: 'Italia',
 
     // Ospiti
@@ -476,17 +477,36 @@ BIC/SWIFT: ${BIC}`
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Telefono *
-                </label>
-                <input
-                  type="tel"
-                  name="ospiteTelefono"
-                  value={formData.ospiteTelefono}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Telefono {!formData.telefonoDaChiedere && '*'}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="telefonoDaChiedere"
+                      checked={formData.telefonoDaChiedere}
+                      onChange={handleChange}
+                      className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                    />
+                    Da chiedere
+                  </label>
+                </div>
+                {formData.telefonoDaChiedere ? (
+                  <div className="px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg text-amber-700 dark:text-amber-300 text-sm">
+                    📞 Telefono da richiedere al cliente
+                  </div>
+                ) : (
+                  <input
+                    type="tel"
+                    name="ospiteTelefono"
+                    value={formData.ospiteTelefono}
+                    onChange={handleChange}
+                    required={!formData.telefonoDaChiedere}
+                    placeholder="+39 333 1234567"
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  />
+                )}
               </div>
 
               <div>
