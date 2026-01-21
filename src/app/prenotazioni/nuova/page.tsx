@@ -78,8 +78,12 @@ export default function NuovaPrenotazionePage() {
     acconto: 0,
   })
 
-  // Totale finale calcolato dai prezzi manuali
-  const totaleFinale = prezziManuali.prezzoSoggiorno + prezziManuali.biancheriaCosto + prezziManuali.tassaSoggiorno + prezziManuali.extra
+  // Arrotondamento a multipli di €50 (per difetto, come villamareblu.it)
+  const roundToMultipleOf50 = (value: number): number => Math.floor(value / 50) * 50
+
+  // Totale finale calcolato dai prezzi manuali (senza tassa soggiorno, già inclusa)
+  const rawTotaleFinale = prezziManuali.prezzoSoggiorno + prezziManuali.biancheriaCosto + prezziManuali.extra
+  const totaleFinale = roundToMultipleOf50(rawTotaleFinale)
 
   // Calculate costs when relevant fields change
   useEffect(() => {
@@ -99,8 +103,8 @@ export default function NuovaPrenotazionePage() {
     }
 
     const notti = calculateNights(formData.checkIn, formData.checkOut)
-    // Neonati NON contano nei posti letto
-    const numPersone = formData.numAdulti + formData.numBambini
+    // Persone che occupano un posto letto (bambini senza letto NON contano)
+    const numPersoneInLetto = formData.numAdulti + formData.numBambini - formData.numNeonati
 
     // Calcola il numero di settimane (arrotondato per eccesso)
     // Se prenoti 6 notti (dom-sab) paghi comunque la settimana intera
@@ -117,14 +121,16 @@ export default function NuovaPrenotazionePage() {
       prezzoSoggiorno += risultato.prezzoTotale
     })
 
-    // Biancheria (neonati NON contano)
-    const biancheriaCosto = formData.biancheria ? numPersone * costiExtra.biancheria : 0
+    // Biancheria solo per persone che occupano un letto
+    const biancheriaCosto = formData.biancheria ? numPersoneInLetto * costiExtra.biancheria : 0
 
-    // Tassa soggiorno (solo adulti 12-70 anni)
-    const tassaSoggiorno = formData.numAdulti * notti * costiExtra.tassaSoggiorno
+    // Tassa soggiorno: INCLUSA nel prezzo base (come villamareblu.it)
+    const tassaSoggiorno = 0
 
-    // Totale
-    const totale = prezzoSoggiorno + biancheriaCosto + tassaSoggiorno
+    // Arrotondamento a multipli di €50 (per difetto, come villamareblu.it)
+    const roundToMultipleOf50 = (value: number): number => Math.floor(value / 50) * 50
+    const rawTotal = prezzoSoggiorno + biancheriaCosto
+    const totale = roundToMultipleOf50(rawTotal)
 
     // Acconto (30%)
     const acconto = Math.round(totale * (costiExtra.accontoPercentuale / 100))
@@ -141,7 +147,7 @@ export default function NuovaPrenotazionePage() {
       acconto,
       saldo,
     })
-  }, [formData.checkIn, formData.checkOut, formData.appartamentiIds, formData.numAdulti, formData.numBambini, formData.biancheria])
+  }, [formData.checkIn, formData.checkOut, formData.appartamentiIds, formData.numAdulti, formData.numBambini, formData.numNeonati, formData.biancheria])
 
   // Sincronizza prezzi manuali con i calcolati quando cambiano (solo se non modificati manualmente)
   useEffect(() => {
@@ -765,23 +771,12 @@ export default function NuovaPrenotazionePage() {
                 </div>
               </div>
 
-              {/* Tassa soggiorno - Modificabile */}
+              {/* Tassa soggiorno - Inclusa nel prezzo */}
               <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                <div>
-                  <span className="text-gray-600 dark:text-gray-300">Tassa soggiorno</span>
-                  <span className="text-xs text-gray-400 ml-1">
-                    (suggerito: {formatPrice(formData.numAdulti * calcolati.notti * costiExtra.tassaSoggiorno)})
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400">€</span>
-                  <input
-                    type="number"
-                    value={prezziManuali.tassaSoggiorno}
-                    onChange={(e) => setPrezziManuali(prev => ({ ...prev, tassaSoggiorno: parseFloat(e.target.value) || 0 }))}
-                    className="w-28 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                  />
-                </div>
+                <span className="text-gray-600 dark:text-gray-300">Tassa soggiorno</span>
+                <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm font-medium rounded-full">
+                  Inclusa
+                </span>
               </div>
 
               {/* Extra / Sconto - Modificabile */}

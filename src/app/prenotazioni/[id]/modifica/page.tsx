@@ -182,8 +182,12 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
     ? calculateNights(formData.checkIn, formData.checkOut)
     : 0
 
-  // Totale finale
-  const totaleFinale = prezziManuali.prezzoSoggiorno + prezziManuali.biancheriaCosto + prezziManuali.tassaSoggiorno + prezziManuali.extra
+  // Arrotondamento a multipli di €50 (come villamareblu.it)
+  const roundToMultipleOf50 = (value: number): number => Math.floor(value / 50) * 50
+
+  // Totale finale - tassa soggiorno INCLUSA nel prezzo base (come villamareblu.it)
+  const rawTotaleFinale = prezziManuali.prezzoSoggiorno + prezziManuali.biancheriaCosto + prezziManuali.extra
+  const totaleFinale = roundToMultipleOf50(rawTotaleFinale)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
@@ -245,7 +249,7 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
         body: JSON.stringify({
           ...formData,
           ...prezziManuali,
-          bianchieriaSets: formData.biancheria ? (formData.numAdulti + formData.numBambini) : 0,
+          bianchieriaSets: formData.biancheria ? (formData.numAdulti + formData.numBambini - formData.numNeonati) : 0,
           totale: totaleFinale,
           saldo: totaleFinale - prezziManuali.acconto,
           // Dettagli acconto
@@ -992,18 +996,12 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
                 </div>
               </div>
 
-              {/* Tassa soggiorno */}
+              {/* Tassa soggiorno - INCLUSA nel prezzo base */}
               <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
                 <span className="text-gray-600 dark:text-gray-300">Tassa soggiorno</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400">€</span>
-                  <input
-                    type="number"
-                    value={prezziManuali.tassaSoggiorno}
-                    onChange={(e) => setPrezziManuali(prev => ({ ...prev, tassaSoggiorno: parseFloat(e.target.value) || 0 }))}
-                    className="w-28 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-right font-medium focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
+                <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm font-medium rounded-full">
+                  Inclusa
+                </span>
               </div>
 
               {/* Extra / Sconto */}
