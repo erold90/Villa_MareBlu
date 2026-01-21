@@ -94,12 +94,23 @@ model Prenotazione {
   tassaSoggiorno      Float         @default(0)
   totale              Float
 
+  // Acconto
   acconto             Float         @default(0)
-  accontoData         DateTime?
+  accontoData         DateTime?     // Data in cui è stato segnato come pagato nel sistema
   accontoPagato       Boolean       @default(false)
+  accontoCausale      String?       // Causale bonifico (es: "VMB-APP2-09AGO2026-ROSSI")
+  accontoDataBonifico DateTime?     // Data effettiva del bonifico bancario
+  accontoNomePagante  String?       // Nome e cognome di chi ha effettuato il pagamento
+  accontoRiferimento  String?       // CRO/Riferimento bancario
+
+  // Saldo
   saldo               Float         @default(0)
-  saldoData           DateTime?
+  saldoData           DateTime?     // Data in cui è stato segnato come pagato nel sistema
   saldoPagato         Boolean       @default(false)
+  saldoCausale        String?       // Causale bonifico per il saldo
+  saldoDataBonifico   DateTime?     // Data effettiva del bonifico saldo
+  saldoNomePagante    String?       // Nome e cognome pagante saldo
+  saldoRiferimento    String?       // CRO/Riferimento bancario saldo
 
   cauzione            Float         @default(200)
   cauzioneIncassata   Boolean       @default(false)

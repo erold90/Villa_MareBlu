@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
-import { Save, ArrowLeft, Dog, Calculator, Plus, X, Users, Bed } from 'lucide-react'
+import { Save, ArrowLeft, Dog, Calculator, Plus, X, Users, Bed, CreditCard, Copy, Check } from 'lucide-react'
 import { cn, formatPrice, calculateNights } from '@/lib/utils'
 import { appartamentiConfig, costiExtra, calcolaPrezzoSoggiorno } from '@/config/appartamenti'
 
@@ -47,6 +47,13 @@ export default function NuovaPrenotazionePage() {
     // Note
     richiesteSpeciali: '',
     noteInterne: '',
+
+    // Dettagli acconto
+    accontoPagato: false,
+    accontoCausale: '',
+    accontoDataBonifico: '',
+    accontoNomePagante: '',
+    accontoRiferimento: '',
   })
 
   // Calculated values (suggeriti dal sistema)
@@ -164,6 +171,32 @@ export default function NuovaPrenotazionePage() {
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [causaleCopied, setCausaleCopied] = useState(false)
+
+  // Genera causale automatica: VMB-APP{n}-{DDMMMYYYY}-{COGNOME}
+  const generateCausale = () => {
+    if (!formData.checkIn || formData.appartamentiIds.length === 0 || !formData.ospiteCognome) {
+      return ''
+    }
+    const appIds = formData.appartamentiIds.sort().join('')
+    const checkInDate = new Date(formData.checkIn)
+    const mesi = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC']
+    const dataStr = `${checkInDate.getDate().toString().padStart(2, '0')}${mesi[checkInDate.getMonth()]}${checkInDate.getFullYear()}`
+    const cognome = formData.ospiteCognome.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 10)
+    return `VMB-APP${appIds}-${dataStr}-${cognome}`
+  }
+
+  // Causale attuale (auto-generata o manuale)
+  const causaleAttuale = formData.accontoCausale || generateCausale()
+
+  // Copia causale negli appunti
+  const copyCausale = () => {
+    if (causaleAttuale) {
+      navigator.clipboard.writeText(causaleAttuale)
+      setCausaleCopied(true)
+      setTimeout(() => setCausaleCopied(false), 2000)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -178,6 +211,7 @@ export default function NuovaPrenotazionePage() {
         },
         body: JSON.stringify({
           ...formData,
+          accontoCausale: causaleAttuale, // Usa causale generata se non modificata
           prezzi: {
             ...prezziManuali,
             totale: totaleFinale,
@@ -778,6 +812,131 @@ export default function NuovaPrenotazionePage() {
                   <span className="text-gray-600 dark:text-gray-300">Cauzione (rimborsabile)</span>
                   <span className="font-medium text-gray-500 dark:text-gray-400">{formatPrice(costiExtra.cauzioneDefault)}</span>
                 </div>
+              </div>
+
+              {/* Dettagli Acconto */}
+              <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-600">
+                <div className="flex items-center gap-2 mb-4">
+                  <CreditCard className="w-5 h-5 text-blue-500" />
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Dettagli Acconto</h3>
+                </div>
+
+                {/* Stato acconto */}
+                <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg mb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">Acconto già ricevuto?</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {formData.accontoPagato ? 'Il cliente ha già pagato l\'acconto' : 'In attesa del bonifico'}
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="accontoPagato"
+                        checked={formData.accontoPagato}
+                        onChange={handleChange}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Causale bonifico (sempre visibile) */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Causale bonifico
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="accontoCausale"
+                      value={causaleAttuale}
+                      onChange={(e) => setFormData(prev => ({ ...prev, accontoCausale: e.target.value }))}
+                      placeholder="Generata automaticamente..."
+                      className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={copyCausale}
+                      disabled={!causaleAttuale}
+                      className={cn(
+                        "px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2",
+                        causaleCopied
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                      )}
+                    >
+                      {causaleCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {causaleCopied ? 'Copiata!' : 'Copia'}
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Comunica questa causale al cliente per il bonifico dell&apos;acconto
+                  </p>
+                </div>
+
+                {/* Campi aggiuntivi se acconto ricevuto */}
+                {formData.accontoPagato && (
+                  <div className="space-y-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+                    <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                      ✓ Inserisci i dettagli del bonifico ricevuto
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Data bonifico
+                        </label>
+                        <input
+                          type="date"
+                          name="accontoDataBonifico"
+                          value={formData.accontoDataBonifico}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Nome pagante
+                        </label>
+                        <input
+                          type="text"
+                          name="accontoNomePagante"
+                          value={formData.accontoNomePagante}
+                          onChange={handleChange}
+                          placeholder="Nome e cognome"
+                          className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Riferimento/CRO bonifico
+                      </label>
+                      <input
+                        type="text"
+                        name="accontoRiferimento"
+                        value={formData.accontoRiferimento}
+                        onChange={handleChange}
+                        placeholder="Es: CRO 123456789"
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Messaggio se in attesa */}
+                {!formData.accontoPagato && prezziManuali.acconto > 0 && (
+                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                      ⏳ <strong>In attesa di pagamento:</strong> Comunica al cliente la causale e l&apos;importo di {formatPrice(prezziManuali.acconto)} da versare tramite bonifico.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Pulsante reset prezzi */}

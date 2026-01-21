@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
-import { Save, ArrowLeft, Dog, Calculator, Loader2, Bed, Users, CheckCircle, XCircle } from 'lucide-react'
+import { Save, ArrowLeft, Dog, Calculator, Loader2, Bed, Users, CheckCircle, XCircle, CreditCard, Copy, Check } from 'lucide-react'
 import { cn, formatPrice, calculateNights } from '@/lib/utils'
 import { appartamentiConfig, costiExtra, calcolaPrezzoSoggiorno } from '@/config/appartamenti'
 
@@ -44,7 +44,15 @@ interface Prenotazione {
   acconto: number
   saldo: number
   accontoPagato: boolean
+  accontoCausale: string | null
+  accontoDataBonifico: string | null
+  accontoNomePagante: string | null
+  accontoRiferimento: string | null
   saldoPagato: boolean
+  saldoCausale: string | null
+  saldoDataBonifico: string | null
+  saldoNomePagante: string | null
+  saldoRiferimento: string | null
   stato: string
   fonte: string
   fonteRiferimento: string | null
@@ -84,8 +92,20 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
     noteInterne: '',
     stato: 'confirmed',
     accontoPagato: false,
+    accontoCausale: '',
+    accontoDataBonifico: '',
+    accontoNomePagante: '',
+    accontoRiferimento: '',
     saldoPagato: false,
+    saldoCausale: '',
+    saldoDataBonifico: '',
+    saldoNomePagante: '',
+    saldoRiferimento: '',
   })
+
+  // Stato per copia causale
+  const [copiedAcconto, setCopiedAcconto] = useState(false)
+  const [copiedSaldo, setCopiedSaldo] = useState(false)
 
   // Prezzi manuali
   const [prezziManuali, setPrezziManuali] = useState({
@@ -129,7 +149,15 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
           noteInterne: data.noteInterne || '',
           stato: data.stato,
           accontoPagato: data.accontoPagato,
+          accontoCausale: data.accontoCausale || '',
+          accontoDataBonifico: data.accontoDataBonifico ? data.accontoDataBonifico.split('T')[0] : '',
+          accontoNomePagante: data.accontoNomePagante || '',
+          accontoRiferimento: data.accontoRiferimento || '',
           saldoPagato: data.saldoPagato,
+          saldoCausale: data.saldoCausale || '',
+          saldoDataBonifico: data.saldoDataBonifico ? data.saldoDataBonifico.split('T')[0] : '',
+          saldoNomePagante: data.saldoNomePagante || '',
+          saldoRiferimento: data.saldoRiferimento || '',
         })
 
         setPrezziManuali({
@@ -172,6 +200,37 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
     }))
   }
 
+  // Copia causale negli appunti
+  const copyCausale = async (causale: string, tipo: 'acconto' | 'saldo') => {
+    try {
+      await navigator.clipboard.writeText(causale)
+      if (tipo === 'acconto') {
+        setCopiedAcconto(true)
+        setTimeout(() => setCopiedAcconto(false), 2000)
+      } else {
+        setCopiedSaldo(true)
+        setTimeout(() => setCopiedSaldo(false), 2000)
+      }
+    } catch (err) {
+      console.error('Errore copia:', err)
+    }
+  }
+
+  // Genera causale automatica
+  const generateCausale = (tipo: 'acconto' | 'saldo') => {
+    if (!formData.checkIn || !formData.ospiteCognome || !prenotazione) return ''
+
+    const checkInDate = new Date(formData.checkIn)
+    const mesi = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC']
+    const giorno = checkInDate.getDate().toString().padStart(2, '0')
+    const mese = mesi[checkInDate.getMonth()]
+    const anno = checkInDate.getFullYear()
+    const cognome = formData.ospiteCognome.toUpperCase().replace(/\s+/g, '')
+    const prefisso = tipo === 'acconto' ? 'VMB' : 'VMB-SALDO'
+
+    return `${prefisso}-APP${prenotazione.appartamentoId}-${giorno}${mese}${anno}-${cognome}`
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -189,6 +248,16 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
           bianchieriaSets: formData.biancheria ? (formData.numAdulti + formData.numBambini) : 0,
           totale: totaleFinale,
           saldo: totaleFinale - prezziManuali.acconto,
+          // Dettagli acconto
+          accontoCausale: formData.accontoCausale || null,
+          accontoDataBonifico: formData.accontoDataBonifico || null,
+          accontoNomePagante: formData.accontoNomePagante || null,
+          accontoRiferimento: formData.accontoRiferimento || null,
+          // Dettagli saldo
+          saldoCausale: formData.saldoCausale || null,
+          saldoDataBonifico: formData.saldoDataBonifico || null,
+          saldoNomePagante: formData.saldoNomePagante || null,
+          saldoRiferimento: formData.saldoRiferimento || null,
         }),
       })
 
@@ -553,6 +622,196 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
                     {formData.saldoPagato ? 'Pagato' : 'Da pagare'}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Dettagli Acconto */}
+            <div className="mt-6 p-4 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+              <div className="flex items-center gap-2 mb-4">
+                <CreditCard className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-gray-900 dark:text-white">Dettagli Bonifico Acconto</h3>
+              </div>
+
+              <div className="space-y-4">
+                {/* Causale */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Causale Bonifico
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="accontoCausale"
+                      value={formData.accontoCausale}
+                      onChange={handleChange}
+                      placeholder={generateCausale('acconto') || 'VMB-APP1-01GEN2026-COGNOME'}
+                      className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white font-mono text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const causale = formData.accontoCausale || generateCausale('acconto')
+                        if (!formData.accontoCausale) {
+                          setFormData(prev => ({ ...prev, accontoCausale: causale }))
+                        }
+                        copyCausale(causale, 'acconto')
+                      }}
+                      className="px-3 py-2.5 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg transition-colors"
+                      title="Copia causale"
+                    >
+                      {copiedAcconto ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5 text-gray-600 dark:text-gray-300" />}
+                    </button>
+                    {!formData.accontoCausale && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, accontoCausale: generateCausale('acconto') }))}
+                        className="px-3 py-2.5 bg-blue-100 dark:bg-blue-800 hover:bg-blue-200 dark:hover:bg-blue-700 text-blue-700 dark:text-blue-200 rounded-lg transition-colors text-sm"
+                      >
+                        Genera
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {formData.accontoPagato && (
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Data Bonifico
+                      </label>
+                      <input
+                        type="date"
+                        name="accontoDataBonifico"
+                        value={formData.accontoDataBonifico}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Nome Pagante
+                      </label>
+                      <input
+                        type="text"
+                        name="accontoNomePagante"
+                        value={formData.accontoNomePagante}
+                        onChange={handleChange}
+                        placeholder="Nome e cognome"
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        CRO / Riferimento
+                      </label>
+                      <input
+                        type="text"
+                        name="accontoRiferimento"
+                        value={formData.accontoRiferimento}
+                        onChange={handleChange}
+                        placeholder="Codice riferimento"
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white font-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Dettagli Saldo */}
+            <div className="mt-4 p-4 border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 rounded-xl">
+              <div className="flex items-center gap-2 mb-4">
+                <CreditCard className="w-5 h-5 text-green-600" />
+                <h3 className="font-semibold text-gray-900 dark:text-white">Dettagli Bonifico Saldo</h3>
+              </div>
+
+              <div className="space-y-4">
+                {/* Causale Saldo */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Causale Bonifico Saldo
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="saldoCausale"
+                      value={formData.saldoCausale}
+                      onChange={handleChange}
+                      placeholder={generateCausale('saldo') || 'VMB-SALDO-APP1-01GEN2026-COGNOME'}
+                      className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white font-mono text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const causale = formData.saldoCausale || generateCausale('saldo')
+                        if (!formData.saldoCausale) {
+                          setFormData(prev => ({ ...prev, saldoCausale: causale }))
+                        }
+                        copyCausale(causale, 'saldo')
+                      }}
+                      className="px-3 py-2.5 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg transition-colors"
+                      title="Copia causale"
+                    >
+                      {copiedSaldo ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5 text-gray-600 dark:text-gray-300" />}
+                    </button>
+                    {!formData.saldoCausale && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, saldoCausale: generateCausale('saldo') }))}
+                        className="px-3 py-2.5 bg-green-100 dark:bg-green-800 hover:bg-green-200 dark:hover:bg-green-700 text-green-700 dark:text-green-200 rounded-lg transition-colors text-sm"
+                      >
+                        Genera
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {formData.saldoPagato && (
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Data Bonifico Saldo
+                      </label>
+                      <input
+                        type="date"
+                        name="saldoDataBonifico"
+                        value={formData.saldoDataBonifico}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Nome Pagante Saldo
+                      </label>
+                      <input
+                        type="text"
+                        name="saldoNomePagante"
+                        value={formData.saldoNomePagante}
+                        onChange={handleChange}
+                        placeholder="Nome e cognome"
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        CRO / Riferimento Saldo
+                      </label>
+                      <input
+                        type="text"
+                        name="saldoRiferimento"
+                        value={formData.saldoRiferimento}
+                        onChange={handleChange}
+                        placeholder="Codice riferimento"
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white font-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
