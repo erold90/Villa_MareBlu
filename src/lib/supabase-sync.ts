@@ -100,7 +100,7 @@ function convertToSupabaseReservation(
     final_price: prenotazione.totale || null,
     deposit_amount: prenotazione.acconto || null,
     payment_status: mapPaymentStatus(prenotazione),
-    payment_method: prenotazione.accontoPagato ? 'bonifico' : null,
+    payment_method: prenotazione.accontoPagato ? 'bank_transfer' : null,
     notes: prenotazione.richiesteSpeciali || prenotazione.noteOspite || null,
     device_id: `pannello-${prenotazione.id}`
   }
