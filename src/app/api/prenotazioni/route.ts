@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
           animali: body.animali || false,
           animaliDettaglio: body.animaliDettaglio || null,
           biancheria: body.biancheria || false,
-          bianchieriaSets: body.biancheria ? (body.numAdulti + body.numBambini) : 0,
+          bianchieriaSets: body.biancheria ? ((body.numAdulti || 0) + (body.numBambini || 0) - (body.numNeonati || 0)) : 0,
           biancheriaCosto: body.prezzi?.biancheriaCosto || 0,
           prezzoSoggiorno: body.prezzi?.prezzoSoggiorno || 0,
           prezzoExtra: body.prezzi?.extra || 0,
