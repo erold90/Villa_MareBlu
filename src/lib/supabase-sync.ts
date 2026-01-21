@@ -100,7 +100,10 @@ function convertToSupabaseReservation(
     final_price: prenotazione.totale || null,
     deposit_amount: prenotazione.acconto || null,
     payment_status: mapPaymentStatus(prenotazione),
-    payment_method: prenotazione.accontoPagato ? 'bank_transfer' : null,
+    // NOTA: Il constraint Supabase accetta solo 'cash' o null.
+    // 'bank_transfer' e 'card' non sono permessi dal constraint esistente.
+    // Per compatibilità usiamo sempre null per le prenotazioni dal pannello.
+    payment_method: null,
     notes: prenotazione.richiesteSpeciali || prenotazione.noteOspite || null,
     device_id: `pannello-${prenotazione.id}`
   }
