@@ -1,8 +1,9 @@
 import puppeteer from 'puppeteer-core';
-import { readFileSync, appendFileSync, existsSync } from 'fs';
+import { readFileSync, appendFileSync, existsSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync, spawn } from 'child_process';
+import readline from 'readline';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -88,59 +89,101 @@ const CONFIG = {
   // Porta debug Chrome
   debugPort: 9222,
 
-  // TEST MODE: se true, non clicca "Pubblica"
-  testMode: false,  // DISATTIVATO per test reale
+  // TEST MODE: se true, non clicca "Pubblica" (mostra solo anteprima)
+  testMode: false,  // DISATTIVATO - pubblica realmente
+
+  // LIMITE GRUPPI: 0 = tutti, altrimenti limita a N gruppi (per test)
+  maxGruppi: 0,  // Tutti i gruppi
 
   // Tempo da aspettare prima di chiudere la tab (millisecondi)
-  tempoChiusuraTab: 10000,  // 10 secondi
+  tempoChiusuraTab: 30000,  // 30 secondi per verificare il post
 };
 
 // ============================================
-// MESSAGGIO DA POSTARE
-// Nota: I codici CIN vanno configurati localmente, non committare su GitHub
+// VARIANTI DEL MESSAGGIO
 // ============================================
-const MESSAGGIO = `🏡 VILLA MAREBLU
-⠀
-Benvenuti a Villa MareBlu, nella quiete del Salento tra Santa Maria di Leuca e Torre Vado.
-Vista panoramica sul Mar Ionio.
-Parcheggio privato gratuito.
-⠀
-📌 I NOSTRI APPARTAMENTI
-4 appartamenti indipendenti, 23 posti letto:
-⠀
-🏠 Apt 1 → 6 persone (2 matr. + castello)
-🏠 Apt 2 → 8 persone (2 matr. + 2 singoli + castello)
-🏠 Apt 3 → 4 persone (1 matr. + castello)
-🏠 Apt 4 → 5 persone (1 matr. + 3 singoli unibili)
-⠀
-Wi-Fi gratuito.
-Aria climatizzata in tutti gli appartamenti.
-Apt 1 scavato nella roccia, naturalmente fresco.
-⠀
-🌊 IL MARE
-Mare a 100 metri con scogliera bassa e accesso privato.
-Tranquillità garantita anche a Ferragosto!
-Spiaggia di sabbia (Pescoluse) a soli 3 km.
-⠀
-📋 CONDIZIONI
-• Soggiorno minimo: 5 notti
-• Check-in/out preferibile: sabato-sabato
-• Flessibili su altre date!
-⠀
-✨ SERVIZI
-TV, cucina, bagno con doccia, docce esterne, barbecue.
-Terrazza vista mare, veranda relax, lavatrice.
-Culla e biancheria su richiesta.
-Animali piccola taglia ammessi 🐕
-⠀
-📍 POSIZIONE
-Cerca "Villa MareBlu Patù" su Google Maps 🗺️
-⠀
-📞 CONTATTI
-🌐 www.villamareblu.it
-📱 393 7767749
-💬 wa.me/393937767749
-✉️ Messaggio privato su Facebook`;
+const VARIANTI = [
+  {
+    nome: "Estate 2026 - Completo",
+    testo: `🔑 CIN: IT075060C200036553
+🔑 CIN: IT075060C200072190
+─
+🏡 VILLA MAREBLU - Salento ☀️
+Case Vacanza - Estate 2026
+─
+🌅 Terrazza con Vista Mare sul Mar Ionio
+🏊 Mare a 150 metri - ciottoli/scoglio piano
+🏖️ Sabbia a soli 3 km (Pescoluse)
+─
+📍 Posizione: maps.app.goo.gl/McgSNN9uzTwRan2H7
+─
+🏘️ 4 APPARTAMENTI INDIPENDENTI:
+🛏️ 23 posti letto totali
+─
+🏠 Appartamento 1 | 6 posti letto
+Piano terra con zona esterna privata e tettoia.
+Cucina e bagno appena ristrutturati.
+─
+🏠 Appartamento 2 | 8 posti letto
+Primo piano con terrazza vista panoramica sul mare.
+─
+🏠 Appartamento 3 | 4 posti letto
+Primo piano con terrazza vista panoramica sul mare.
+─
+🏠 Appartamento 4 | 5 posti letto
+Piano terra con zona esterna privata e tettoia.
+Accessibile per persone disabili.
+─
+🌐 Preventivo: www.villamareblu.it/preventivo
+─
+SERVIZI INCLUSI IN TUTTI GLI APPARTAMENTI:
+✅ TV + Wi-Fi gratuito
+✅ Aria condizionata (Apt 2, 3, 4)
+✅ Cucina attrezzata di tutto
+✅ Parcheggio privato
+✅ Docce esterne
+✅ Lavatrice in comune
+✅ Culla su richiesta
+🐕 Animali ammessi (piccola taglia)
+─
+📍 Posizione: maps.app.goo.gl/McgSNN9uzTwRan2H7
+🌐 Preventivo: www.villamareblu.it/preventivo
+📱 WhatsApp: wa.me/393780038730
+📞 Telefono: 378 0038730`
+  },
+];
+
+// File per tracciare l'ultimo uso delle varianti
+const VARIANTI_USAGE_FILE = join(__dirname, 'varianti-usage.json');
+
+function getVariantiUsage() {
+  try {
+    if (existsSync(VARIANTI_USAGE_FILE)) {
+      return JSON.parse(readFileSync(VARIANTI_USAGE_FILE, 'utf-8'));
+    }
+  } catch (e) {}
+  return {};
+}
+
+function saveVarianteUsage(varianteIndex) {
+  const usage = getVariantiUsage();
+  usage[varianteIndex + 1] = new Date().toISOString();
+  writeFileSync(VARIANTI_USAGE_FILE, JSON.stringify(usage, null, 2));
+}
+
+// ============================================
+// FUNZIONE PER INPUT UTENTE
+// ============================================
+function askQuestion(query) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise(resolve => rl.question(query, ans => {
+    rl.close();
+    resolve(ans);
+  }));
+}
 
 // ============================================
 // LISTA GRUPPI FACEBOOK
@@ -518,10 +561,30 @@ async function postToGroup(page, gruppo, messaggio, fotoPaths) {
     log(`   ✅ Area testo trovata (${textAreaInfo.method})`);
     await sleep(500);
 
-    // Scrivi il messaggio usando la tastiera
-    await page.keyboard.type(messaggio, { delay: 0 });
+    // Scrivi il messaggio riga per riga (unico metodo affidabile con Puppeteer)
+    // Usa Shift+Enter per line break compatti, Enter normale per le righe con link (più spazio per cliccare)
+    const righe = messaggio.split('\n');
+    const linkPrefixes = ['📍', '🌐', '📱', '📞'];
 
-    log(`   ✅ Testo inserito`);
+    for (let i = 0; i < righe.length; i++) {
+      if (righe[i].length > 0) {
+        await page.keyboard.type(righe[i], { delay: 0 });
+      }
+      if (i < righe.length - 1) {
+        // Usa Enter normale se la riga SUCCESSIVA inizia con emoji link (per dare spazio ai link cliccabili)
+        const nextLine = righe[i + 1] || '';
+        const useNormalEnter = linkPrefixes.some(prefix => nextLine.startsWith(prefix));
+
+        if (useNormalEnter) {
+          await page.keyboard.press('Enter');
+        } else {
+          await page.keyboard.down('Shift');
+          await page.keyboard.press('Enter');
+          await page.keyboard.up('Shift');
+        }
+      }
+    }
+    log(`   ✅ Testo inserito (${righe.length} righe)`);
     await sleep(1500);
 
     // STEP 3: Allega foto se presenti
@@ -720,14 +783,70 @@ async function main() {
   }
 
   const fotoPaths = getPhotosPaths();
+  const variantiUsage = getVariantiUsage();
 
-  console.log(`📋 Gruppi da postare: ${GRUPPI.length}`);
-  console.log(`📸 Foto da allegare: ${fotoPaths.length}`);
-  console.log(`⏱️  Delay tra gruppi: ${CONFIG.delayMinMs/1000}-${CONFIG.delayMaxMs/1000} secondi`);
+  // ============================================
+  // MENU INTERATTIVO
+  // ============================================
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('                    📝 SCEGLI VARIANTE');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  VARIANTI.forEach((v, i) => {
+    const lastUsed = variantiUsage[i + 1];
+    const lastUsedStr = lastUsed ? ` (ultimo uso: ${new Date(lastUsed).toLocaleDateString('it-IT')})` : ' (mai usata)';
+    console.log(`  ${i + 1}. ${v.nome}${lastUsedStr}`);
+  });
+  console.log('');
+
+  let varianteIndex = 0;
+  if (VARIANTI.length > 1) {
+    const varianteInput = await askQuestion(`Quale variante vuoi usare? [1-${VARIANTI.length}] (default: 1): `);
+    varianteIndex = parseInt(varianteInput) - 1 || 0;
+    if (varianteIndex < 0 || varianteIndex >= VARIANTI.length) varianteIndex = 0;
+  }
+
+  const varianteSelezionata = VARIANTI[varianteIndex];
+  console.log(`\n✅ Variante selezionata: ${varianteSelezionata.nome}\n`);
+
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('                 📍 GRUPPO DI PARTENZA');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`  Totale gruppi disponibili: ${GRUPPI.length}`);
+  console.log('');
+
+  const gruppoInput = await askQuestion(`Da quale gruppo vuoi partire? [1-${GRUPPI.length}] (default: 1): `);
+  let gruppoPartenza = parseInt(gruppoInput) - 1 || 0;
+  if (gruppoPartenza < 0 || gruppoPartenza >= GRUPPI.length) gruppoPartenza = 0;
+
+  let gruppiDaPostare = GRUPPI.slice(gruppoPartenza);
+
+  // Applica limite gruppi se configurato (per test)
+  if (CONFIG.maxGruppi > 0) {
+    gruppiDaPostare = gruppiDaPostare.slice(0, CONFIG.maxGruppi);
+  }
+  console.log(`\n✅ Partenza dal gruppo ${gruppoPartenza + 1} (${GRUPPI[gruppoPartenza].nome})`);
+  console.log(`   Gruppi da elaborare: ${gruppiDaPostare.length}\n`);
+
+  // Salva uso variante
+  saveVarianteUsage(varianteIndex);
+
+  // ============================================
+  // RIEPILOGO PRE-AVVIO
+  // ============================================
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('                      📊 RIEPILOGO');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`  📝 Variante: ${varianteSelezionata.nome}`);
+  console.log(`  📋 Gruppi da postare: ${gruppiDaPostare.length} (dal ${gruppoPartenza + 1} all'${GRUPPI.length})`);
+  console.log(`  📸 Foto da allegare: ${fotoPaths.length}`);
+  console.log(`  ⏱️  Delay tra gruppi: ${CONFIG.delayMinMs/1000}-${CONFIG.delayMaxMs/1000} secondi`);
   if (CONFIG.testMode) {
-    console.log(`🧪 TEST MODE ATTIVO: Non verrà pubblicato nulla!`);
+    console.log(`  🧪 TEST MODE ATTIVO: Non verrà pubblicato nulla!`);
   }
   console.log('');
+
+  const conferma = await askQuestion('Premi INVIO per iniziare o CTRL+C per annullare...');
 
   // Avvia Chrome automaticamente
   try {
@@ -738,6 +857,7 @@ async function main() {
   }
 
   log('🚀 Avvio pubblicazione...');
+  log(`📝 Variante: ${varianteSelezionata.nome}`);
 
   let browser;
   try {
@@ -753,15 +873,16 @@ async function main() {
     let errori = 0;
     const tabDaChiudere = []; // Array di {page, tempoChiusura}
 
-    for (let i = 0; i < GRUPPI.length; i++) {
-      const gruppo = GRUPPI[i];
+    for (let i = 0; i < gruppiDaPostare.length; i++) {
+      const gruppo = gruppiDaPostare[i];
+      const numeroGruppoOriginale = gruppoPartenza + i + 1;
 
-      log(`\n[${i + 1}/${GRUPPI.length}] Elaborazione gruppo...`);
+      log(`\n[${i + 1}/${gruppiDaPostare.length}] (Gruppo ${numeroGruppoOriginale}/${GRUPPI.length}) Elaborazione...`);
 
       // Crea una NUOVA tab per ogni gruppo
       const page = await browser.newPage();
 
-      const risultato = await postToGroup(page, gruppo, MESSAGGIO, fotoPaths);
+      const risultato = await postToGroup(page, gruppo, varianteSelezionata.testo, fotoPaths);
 
       if (risultato.success) {
         successi++;
@@ -790,7 +911,7 @@ async function main() {
       }
 
       // Delay prima del prossimo gruppo (tranne l'ultimo)
-      if (i < GRUPPI.length - 1 && CONFIG.delayMinMs > 0) {
+      if (i < gruppiDaPostare.length - 1 && CONFIG.delayMinMs > 0) {
         const delay = randomDelay(CONFIG.delayMinMs, CONFIG.delayMaxMs);
         log(`⏳ Attesa ${Math.round(delay/1000)} secondi prima del prossimo gruppo...`);
         await sleep(delay);
@@ -819,9 +940,10 @@ async function main() {
 ╔═══════════════════════════════════════════════════════════╗
 ║                      RIEPILOGO                            ║
 ╠═══════════════════════════════════════════════════════════╣
+║  📝 Variante: ${varianteSelezionata.nome.padEnd(41)}║
 ║  ✅ Pubblicati con successo: ${String(successi).padStart(3)}                         ║
 ║  ❌ Errori: ${String(errori).padStart(3)}                                        ║
-║  📊 Totale gruppi: ${String(GRUPPI.length).padStart(3)}                               ║
+║  📊 Gruppi elaborati: ${String(gruppiDaPostare.length).padStart(3)} (su ${String(GRUPPI.length).padStart(3)} totali)                ║
 ╚═══════════════════════════════════════════════════════════╝
 `);
 

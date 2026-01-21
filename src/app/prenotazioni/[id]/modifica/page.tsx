@@ -108,6 +108,15 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
   const [copiedSaldo, setCopiedSaldo] = useState(false)
   const [copiedDatiBonificoAcconto, setCopiedDatiBonificoAcconto] = useState(false)
   const [copiedDatiBonificoSaldo, setCopiedDatiBonificoSaldo] = useState(false)
+  const [ibanCopied, setIbanCopied] = useState(false)
+  const [causaleCopiedAcconto, setCausaleCopiedAcconto] = useState(false)
+  const [messaggioCopiedAcconto, setMessaggioCopiedAcconto] = useState(false)
+
+  // Dati bancari fissi
+  const IBAN = 'IT65V3677222300OEM002615062'
+  const INTESTATARIO = 'Lo Re Daniele'
+  const BANCA = 'HYPE - Banca Sella'
+  const BIC = 'HYEEIT22XXX'
 
   // Prezzi manuali
   const [prezziManuali, setPrezziManuali] = useState({
@@ -238,6 +247,49 @@ export default function ModificaPrenotazionePage({ params }: { params: Promise<{
       }
     } catch (err) {
       console.error('Errore copia:', err)
+    }
+  }
+
+  // Copia IBAN
+  const copyIBAN = () => {
+    navigator.clipboard.writeText(IBAN)
+    setIbanCopied(true)
+    setTimeout(() => setIbanCopied(false), 2000)
+  }
+
+  // Copia causale acconto
+  const copyCausaleAcconto = () => {
+    const causale = formData.accontoCausale || generateCausale('acconto')
+    if (causale) {
+      navigator.clipboard.writeText(causale)
+      setCausaleCopiedAcconto(true)
+      setTimeout(() => setCausaleCopiedAcconto(false), 2000)
+    }
+  }
+
+  // Genera messaggio completo per il cliente
+  const generateMessaggioCompleto = (tipo: 'acconto' | 'saldo') => {
+    const causale = tipo === 'acconto'
+      ? (formData.accontoCausale || generateCausale('acconto'))
+      : (formData.saldoCausale || generateCausale('saldo'))
+    if (!causale) return ''
+    const importo = tipo === 'acconto' ? prezziManuali.acconto : (totaleFinale - prezziManuali.acconto)
+    return `Per confermare la prenotazione, effettua un bonifico di €${importo.toLocaleString('it-IT')} con questi dati:
+
+Intestatario: ${INTESTATARIO}
+IBAN: ${IBAN}
+Banca: ${BANCA}
+Causale: ${causale}
+BIC/SWIFT: ${BIC}`
+  }
+
+  // Copia messaggio completo
+  const copyMessaggioCompleto = () => {
+    const messaggio = generateMessaggioCompleto('acconto')
+    if (messaggio) {
+      navigator.clipboard.writeText(messaggio)
+      setMessaggioCopiedAcconto(true)
+      setTimeout(() => setMessaggioCopiedAcconto(false), 2000)
     }
   }
 
@@ -717,23 +769,80 @@ BIC/SWIFT: HYEEIT22XXX`
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Dati bonifico per il cliente
                   </label>
-                  <div className="p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg mb-2 font-mono text-xs text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                    {generateDatiBonifico('acconto') || 'Compila le date per generare...'}
+
+                  <div className="space-y-3">
+                    {/* IBAN con pulsante copia */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 p-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 block">IBAN</span>
+                        <span className="font-mono text-sm text-gray-900 dark:text-white">{IBAN}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={copyIBAN}
+                        className={cn(
+                          "px-3 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap",
+                          ibanCopied
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                            : "bg-blue-600 text-white hover:bg-blue-700"
+                        )}
+                      >
+                        {ibanCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {ibanCopied ? 'Copiato!' : 'Copia'}
+                      </button>
+                    </div>
+
+                    {/* Causale con pulsante copia */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 p-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 block">Causale</span>
+                        <span className="font-mono text-sm text-gray-900 dark:text-white">
+                          {formData.accontoCausale || generateCausale('acconto') || 'Compila le date'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={copyCausaleAcconto}
+                        disabled={!generateCausale('acconto')}
+                        className={cn(
+                          "px-3 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap",
+                          causaleCopiedAcconto
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                            : "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
+                        )}
+                      >
+                        {causaleCopiedAcconto ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {causaleCopiedAcconto ? 'Copiato!' : 'Copia'}
+                      </button>
+                    </div>
+
+                    {/* Info aggiuntive */}
+                    <div className="p-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400">
+                      <div><span className="text-gray-500">Intestatario:</span> {INTESTATARIO}</div>
+                      <div><span className="text-gray-500">Banca:</span> {BANCA}</div>
+                      <div><span className="text-gray-500">BIC/SWIFT:</span> {BIC}</div>
+                    </div>
+
+                    {/* Bottone copia messaggio completo */}
+                    <button
+                      type="button"
+                      onClick={copyMessaggioCompleto}
+                      disabled={!generateCausale('acconto')}
+                      className={cn(
+                        "w-full py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium",
+                        messaggioCopiedAcconto
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                      )}
+                    >
+                      {messaggioCopiedAcconto ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {messaggioCopiedAcconto ? 'Copiato!' : 'Copia messaggio completo'}
+                    </button>
+
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                      💡 Su WhatsApp/Messenger invia IBAN e Causale come messaggi separati
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => copyDatiBonifico('acconto')}
-                    disabled={!generateCausale('acconto')}
-                    className={cn(
-                      "w-full py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium",
-                      copiedDatiBonificoAcconto
-                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                        : "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
-                    )}
-                  >
-                    {copiedDatiBonificoAcconto ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copiedDatiBonificoAcconto ? 'Copiato!' : 'Copia dati bonifico'}
-                  </button>
                 </div>
 
                 {formData.accontoPagato && (

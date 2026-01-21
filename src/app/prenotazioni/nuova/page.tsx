@@ -185,8 +185,15 @@ export default function NuovaPrenotazionePage() {
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [ibanCopied, setIbanCopied] = useState(false)
   const [causaleCopied, setCausaleCopied] = useState(false)
-  const [datiBonificoCopied, setDatiBonificoCopied] = useState(false)
+  const [messaggioCopied, setMessaggioCopied] = useState(false)
+
+  // Dati bancari fissi
+  const IBAN = 'IT65V3677222300OEM002615062'
+  const INTESTATARIO = 'Lo Re Daniele'
+  const BANCA = 'HYPE - Banca Sella'
+  const BIC = 'HYEEIT22XXX'
 
   // Genera causale automatica: VMB-APP{n}-{DDMMMYYYY}-{COGNOME}
   // Genera causale: ACCVMBAPP{n}{DDin}{MMin}{DDout}{MMout}
@@ -205,22 +212,28 @@ export default function NuovaPrenotazionePage() {
     return `ACCVMBAPP${appIds}${ddIn}${mmIn}${ddOut}${mmOut}`
   }
 
-  // Genera testo completo dati bonifico per il cliente
-  const generateDatiBonifico = () => {
-    const causale = causaleAttuale
-    if (!causale) return ''
-    return `Intestatario: Lo Re Daniele
-IBAN: IT65V3677222300OEM002615062
-Banca: HYPE - Banca Sella
-Causale: ${causale}
-
-BIC/SWIFT: HYEEIT22XXX`
-  }
-
   // Causale attuale (auto-generata o manuale)
   const causaleAttuale = formData.accontoCausale || generateCausale()
 
-  // Copia causale negli appunti
+  // Genera messaggio completo per il cliente (tutti i dati bonifico)
+  const generateMessaggioCompleto = () => {
+    if (!causaleAttuale) return ''
+    return `Per confermare la prenotazione, effettua un bonifico di €${prezziManuali.acconto.toLocaleString('it-IT')} con questi dati:
+
+Intestatario: ${INTESTATARIO}
+IBAN: ${IBAN}
+Banca: ${BANCA}
+Causale: ${causaleAttuale}
+BIC/SWIFT: ${BIC}`
+  }
+
+  // Funzioni copia
+  const copyIBAN = () => {
+    navigator.clipboard.writeText(IBAN)
+    setIbanCopied(true)
+    setTimeout(() => setIbanCopied(false), 2000)
+  }
+
   const copyCausale = () => {
     if (causaleAttuale) {
       navigator.clipboard.writeText(causaleAttuale)
@@ -229,13 +242,12 @@ BIC/SWIFT: HYEEIT22XXX`
     }
   }
 
-  // Copia dati bonifico completi negli appunti
-  const copyDatiBonifico = () => {
-    const dati = generateDatiBonifico()
-    if (dati) {
-      navigator.clipboard.writeText(dati)
-      setDatiBonificoCopied(true)
-      setTimeout(() => setDatiBonificoCopied(false), 2000)
+  const copyMessaggioCompleto = () => {
+    const messaggio = generateMessaggioCompleto()
+    if (messaggio) {
+      navigator.clipboard.writeText(messaggio)
+      setMessaggioCopied(true)
+      setTimeout(() => setMessaggioCopied(false), 2000)
     }
   }
 
@@ -908,30 +920,79 @@ BIC/SWIFT: HYEEIT22XXX`
                     Dati bonifico per il cliente
                   </label>
 
-                  {/* Preview dati bonifico */}
-                  <div className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg mb-2 font-mono text-xs text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                    {generateDatiBonifico() || 'Compila appartamento e date per generare...'}
+                  <div className="space-y-3">
+                    {/* IBAN con pulsante copia */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 block">IBAN</span>
+                        <span className="font-mono text-sm text-gray-900 dark:text-white">{IBAN}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={copyIBAN}
+                        className={cn(
+                          "px-3 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap",
+                          ibanCopied
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                            : "bg-blue-600 text-white hover:bg-blue-700"
+                        )}
+                      >
+                        {ibanCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {ibanCopied ? 'Copiato!' : 'Copia'}
+                      </button>
+                    </div>
+
+                    {/* Causale con pulsante copia */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 block">Causale</span>
+                        <span className="font-mono text-sm text-gray-900 dark:text-white">
+                          {causaleAttuale || 'Seleziona appartamento e date'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={copyCausale}
+                        disabled={!causaleAttuale}
+                        className={cn(
+                          "px-3 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap",
+                          causaleCopied
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                            : "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
+                        )}
+                      >
+                        {causaleCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {causaleCopied ? 'Copiato!' : 'Copia'}
+                      </button>
+                    </div>
+
+                    {/* Info aggiuntive (non copiabili separatamente) */}
+                    <div className="p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-400">
+                      <div><span className="text-gray-500">Intestatario:</span> {INTESTATARIO}</div>
+                      <div><span className="text-gray-500">Banca:</span> {BANCA}</div>
+                      <div><span className="text-gray-500">BIC/SWIFT:</span> {BIC}</div>
+                    </div>
+
+                    {/* Bottone copia messaggio completo */}
+                    <button
+                      type="button"
+                      onClick={copyMessaggioCompleto}
+                      disabled={!causaleAttuale}
+                      className={cn(
+                        "w-full py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium",
+                        messaggioCopied
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                      )}
+                    >
+                      {messaggioCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {messaggioCopied ? 'Copiato!' : 'Copia messaggio completo'}
+                    </button>
+
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                      💡 Su WhatsApp/Messenger invia IBAN e Causale come messaggi separati
+                    </p>
                   </div>
-
-                  {/* Bottone copia dati completi */}
-                  <button
-                    type="button"
-                    onClick={copyDatiBonifico}
-                    disabled={!causaleAttuale}
-                    className={cn(
-                      "w-full py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium",
-                      datiBonificoCopied
-                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                        : "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
-                    )}
-                  >
-                    {datiBonificoCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {datiBonificoCopied ? 'Copiato!' : 'Copia dati bonifico'}
-                  </button>
-
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    Incolla questo testo nella chat con il cliente
-                  </p>
                 </div>
 
                 {/* Campi aggiuntivi se acconto ricevuto */}
