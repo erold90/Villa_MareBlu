@@ -330,10 +330,6 @@ export default function PrenotazioniPage() {
                       <p className="text-sm text-gray-500 dark:text-gray-400">{pren.appartamento.nome}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {pren.animali && <Dog className="w-4 h-4 text-amber-500" />}
-                    {pren.biancheria && <Bed className="w-4 h-4 text-blue-500" />}
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
@@ -356,6 +352,24 @@ export default function PrenotazioniPage() {
                     <p className="font-bold text-gray-900 dark:text-white">{formatPrice(pren.totale)}</p>
                   </div>
                 </div>
+
+                {/* Extra: Biancheria e Animali - BEN VISIBILI */}
+                {(pren.biancheria || pren.animali) && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {pren.biancheria && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium">
+                        <Bed className="w-4 h-4" />
+                        Biancheria ({pren.bianchieriaSets} set)
+                      </span>
+                    )}
+                    {pren.animali && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-lg text-sm font-medium">
+                        <Dog className="w-4 h-4" />
+                        {pren.animaliDettaglio || 'Animali'}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
                   <div className="flex items-center gap-2">
