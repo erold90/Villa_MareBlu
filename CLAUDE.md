@@ -215,6 +215,25 @@ CONFIG FILE ──────► DATABASE ◄────── UTENTE (pagina 
                   └─────────┘
 ```
 
+### Sincronizzazione con villamareblu.it (Supabase)
+```
+┌──────────────────┐          ┌──────────────────┐
+│   PANNELLO       │   ────►  │  villamareblu.it │
+│   (Neon DB)      │   sync   │  (Supabase)      │
+│   MASTER         │          │  SLAVE           │
+└──────────────────┘          └──────────────────┘
+
+Prezzi:       Sync MANUALE dalla pagina /prezzi
+Prenotazioni: Sync AUTOMATICO su create/update/delete
+```
+
+**Come funziona la sync prenotazioni:**
+- Quando crei una prenotazione → automaticamente copiata su Supabase
+- Quando modifichi una prenotazione → aggiornata su Supabase
+- Quando elimini/annulli → rimossa da Supabase
+- L'ID numerico del pannello viene convertito in UUID per Supabase
+- La sync avviene in background, non rallenta le operazioni
+
 ### API Principali
 | Endpoint | Metodi | Descrizione |
 |----------|--------|-------------|
@@ -226,6 +245,7 @@ CONFIG FILE ──────► DATABASE ◄────── UTENTE (pagina 
 | `/api/ai-actions` | POST | Esecuzione azioni AI |
 | `/api/calendario` | GET | Dati calendario |
 | `/api/pulizie` | GET, POST, PUT | Gestione pulizie |
+| `/api/sync-reservations-to-supabase` | POST | Sync prenotazioni → villamareblu.it |
 
 ### Database (PostgreSQL su Neon)
 Tabelle principali:
@@ -289,6 +309,9 @@ git add -A && git commit -m "messaggio" && git push origin main
 | 2026-01-14 | Media: tutti +€50/settimana |
 | 2026-01-14 | Bassa: App2 +€50 (altri invariati) |
 | 2026-01-14 | Incremento revenue annuale stimato: +€2.600 (+5.7%) |
+| 2026-01-21 | **SYNC PRENOTAZIONI** - Sincronizzazione automatica Pannello → villamareblu.it |
+| 2026-01-21 | Nuova API `/api/sync-reservations-to-supabase` per sync prenotazioni |
+| 2026-01-21 | Auto-sync quando crei/modifichi/elimini prenotazioni (anche via AI) |
 
 ---
 

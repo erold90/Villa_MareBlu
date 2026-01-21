@@ -1,5 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+
+/**
+ * Sincronizza una prenotazione con Supabase (villamareblu.it)
+ */
+async function syncToSupabase(prenotazioneId: number, action: 'sync' | 'delete' = 'sync') {
+  try {
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXTAUTH_URL || 'http://localhost:3000'
+
+    const response = await fetch(`${baseUrl}/api/sync-reservations-to-supabase`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prenotazioneId, action }),
+    })
+
+    const result = await response.json()
+    if (result.success) {
+      console.log(`[AI-SYNC] ✅ Prenotazione ${prenotazioneId} sincronizzata con villamareblu.it`)
+    } else {
+      console.error(`[AI-SYNC] ❌ Errore sync prenotazione ${prenotazioneId}:`, result.error)
+    }
+  } catch (error) {
+    console.error(`[AI-SYNC] ❌ Errore chiamata sync:`, error)
+  }
+}
+
 import type {
   AzioneAI,
   AzioneCreaPrenotazione,
@@ -114,6 +141,9 @@ async function creaPrenotazione(dati: AzioneCreaPrenotazione['dati']) {
         },
       })
       prenotazioniCreate.push(prenotazione)
+
+      // Sincronizza con Supabase (villamareblu.it) in background
+      syncToSupabase(prenotazione.id, 'sync').catch(console.error)
     }
 
     return {
@@ -237,6 +267,9 @@ async function modificaPrenotazione(dati: AzioneModificaPrenotazione['dati']) {
       data: updateData,
     })
 
+    // Sincronizza con Supabase (villamareblu.it) in background
+    syncToSupabase(dati.prenotazioneId, 'sync').catch(console.error)
+
     return {
       success: true,
       messaggio: `Prenotazione #${dati.prenotazioneId} aggiornata con successo`,
@@ -261,6 +294,9 @@ async function annullaPrenotazione(dati: AzioneAnnullaPrenotazione['dati']) {
         noteInterne: `Cancellata: ${dati.motivo}`,
       },
     })
+
+    // Rimuovi da Supabase (villamareblu.it) in background
+    syncToSupabase(dati.prenotazioneId, 'delete').catch(console.error)
 
     return {
       success: true,

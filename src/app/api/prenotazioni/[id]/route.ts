@@ -1,6 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+/**
+ * Sincronizza una prenotazione con Supabase (villamareblu.it)
+ * Chiamata in background, non blocca la risposta
+ */
+async function syncToSupabase(prenotazioneId: number, action: 'sync' | 'delete' = 'sync') {
+  try {
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXTAUTH_URL || 'http://localhost:3000'
+
+    const response = await fetch(`${baseUrl}/api/sync-reservations-to-supabase`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prenotazioneId, action }),
+    })
+
+    const result = await response.json()
+    if (result.success) {
+      console.log(`[SYNC] ✅ Prenotazione ${prenotazioneId} ${action === 'delete' ? 'rimossa da' : 'sincronizzata con'} villamareblu.it`)
+    } else {
+      console.error(`[SYNC] ❌ Errore sync prenotazione ${prenotazioneId}:`, result.error)
+    }
+  } catch (error) {
+    console.error(`[SYNC] ❌ Errore chiamata sync:`, error)
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -87,6 +114,9 @@ export async function PUT(
       },
     })
 
+    // Sincronizza con Supabase (villamareblu.it) in background
+    syncToSupabase(prenotazione.id, 'sync').catch(console.error)
+
     return NextResponse.json(prenotazione)
   } catch (error) {
     console.error('Errore PUT prenotazione:', error)
@@ -103,10 +133,14 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    const prenotazioneId = parseInt(id)
 
     await prisma.prenotazione.delete({
-      where: { id: parseInt(id) },
+      where: { id: prenotazioneId },
     })
+
+    // Rimuovi da Supabase (villamareblu.it) in background
+    syncToSupabase(prenotazioneId, 'delete').catch(console.error)
 
     return NextResponse.json({ success: true })
   } catch (error) {
