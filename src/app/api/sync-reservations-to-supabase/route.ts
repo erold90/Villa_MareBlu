@@ -37,16 +37,16 @@ function generateUUID(pannelloId: number): string {
 }
 
 /**
- * Mappa lo stato del pannello allo stato Supabase
+ * Mappa lo stato del pannello allo stato pagamento Supabase
+ * Supabase accetta: 'paid', 'deposit', 'notPaid'
  */
-function mapStatus(stato: string): string {
-  const statusMap: Record<string, string> = {
-    'pending': 'in_attesa',
-    'confirmed': 'confermato',
-    'completed': 'completato',
-    'cancelled': 'cancellato'
-  }
-  return statusMap[stato] || 'in_attesa'
+function mapPaymentStatus(prenotazione: any): string {
+  // Se saldo pagato → paid
+  if (prenotazione.saldoPagato) return 'paid'
+  // Se acconto pagato → deposit
+  if (prenotazione.accontoPagato) return 'deposit'
+  // Altrimenti → notPaid
+  return 'notPaid'
 }
 
 /**
@@ -67,10 +67,10 @@ function convertToSupabaseReservation(
     children: prenotazione.numBambini || 0,
     cribs: prenotazione.numNeonati || 0,
     has_pets: prenotazione.animali || false,
-    linen_option: prenotazione.biancheria ? 'inclusa' : null,
+    linen_option: prenotazione.biancheria ? 'yes' : 'no',
     final_price: prenotazione.totale || null,
     deposit_amount: prenotazione.acconto || null,
-    payment_status: mapStatus(prenotazione.stato),
+    payment_status: mapPaymentStatus(prenotazione),
     payment_method: prenotazione.accontoPagato ? 'bonifico' : null,
     notes: prenotazione.richiesteSpeciali || prenotazione.noteOspite || null,
     device_id: `pannello-${prenotazione.id}` // Collegamento con ID pannello
