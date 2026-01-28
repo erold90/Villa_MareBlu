@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { syncReservationToSupabase } from '@/lib/supabase-sync'
+import { calcolaPrezzoMultiAppartamenti } from '@/lib/calcola-prezzo'
 
 export async function POST(request: NextRequest) {
   try {
@@ -113,14 +114,32 @@ export async function POST(request: NextRequest) {
 
     // NUOVO: Crea UNA sola prenotazione con N appartamenti tramite tabella pivot
     // Estrai i prezzi per appartamento dal body (se forniti)
-    const prezziPerAppartamento = body.prezzi?.perAppartamento || {}
+    let prezziPerAppartamento = body.prezzi?.perAppartamento || {}
+
+    // Se non ci sono prezzi per appartamento, calcola dal database
+    if (Object.keys(prezziPerAppartamento).length === 0 || Object.keys(prezziPerAppartamento).length !== body.appartamentiIds.length) {
+      console.log('[API] Calcolo prezzi automatico dal database...')
+      const calcoloPrezzi = await calcolaPrezzoMultiAppartamenti(
+        body.appartamentiIds,
+        checkInDate,
+        checkOutDate
+      )
+      // Costruisci prezziPerAppartamento dal calcolo
+      prezziPerAppartamento = {}
+      for (const [id, calc] of Object.entries(calcoloPrezzi.perAppartamento)) {
+        prezziPerAppartamento[parseInt(id)] = calc.prezzoTotale
+      }
+      console.log('[API] Prezzi calcolati:', prezziPerAppartamento, 'Totale:', calcoloPrezzi.prezzoTotale)
+    }
 
     // Calcola prezzoSoggiorno totale (somma dei singoli appartamenti)
-    let prezzoSoggiornoTotale = body.prezzi?.prezzoSoggiorno || 0
-    if (Object.keys(prezziPerAppartamento).length > 0) {
-      prezzoSoggiornoTotale = Object.values(prezziPerAppartamento).reduce(
-        (sum: number, prezzo: any) => sum + (prezzo || 0), 0
-      )
+    let prezzoSoggiornoTotale = Object.values(prezziPerAppartamento).reduce(
+      (sum: number, prezzo: any) => sum + (prezzo || 0), 0
+    )
+
+    // Se ancora zero, usa il valore dal frontend come fallback
+    if (prezzoSoggiornoTotale === 0 && body.prezzi?.prezzoSoggiorno) {
+      prezzoSoggiornoTotale = body.prezzi.prezzoSoggiorno
     }
 
     // Crea la prenotazione principale
