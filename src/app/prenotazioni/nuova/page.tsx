@@ -158,14 +158,34 @@ export default function NuovaPrenotazionePage() {
     })
   }, [formData.checkIn, formData.checkOut, formData.appartamentiIds, formData.numAdulti, formData.numBambini, formData.numNeonati, formData.biancheria])
 
+  // Traccia gli appartamenti precedenti per rilevare cambiamenti
+  const [prevAppartamenti, setPrevAppartamenti] = useState<number[]>([])
+
+  // Quando cambiano gli appartamenti, FORZA l'aggiornamento del prezzo soggiorno
+  useEffect(() => {
+    const appartamentiCambiati =
+      formData.appartamentiIds.length !== prevAppartamenti.length ||
+      !formData.appartamentiIds.every((id, i) => prevAppartamenti[i] === id)
+
+    if (appartamentiCambiati && calcolati.prezzoSoggiorno > 0) {
+      // Resetta il prezzo soggiorno al valore calcolato quando cambiano appartamenti
+      setPrezziManuali(prev => ({
+        ...prev,
+        prezzoSoggiorno: calcolati.prezzoSoggiorno,
+        acconto: calcolati.acconto,
+      }))
+      setPrevAppartamenti([...formData.appartamentiIds])
+    }
+  }, [formData.appartamentiIds, calcolati.prezzoSoggiorno, calcolati.acconto, prevAppartamenti])
+
   // Sincronizza prezzi manuali con i calcolati quando cambiano (solo se non modificati manualmente)
   useEffect(() => {
     setPrezziManuali(prev => ({
-      prezzoSoggiorno: prev.prezzoSoggiorno === 0 || prev.prezzoSoggiorno === calcolati.prezzoSoggiorno ? calcolati.prezzoSoggiorno : prev.prezzoSoggiorno,
+      prezzoSoggiorno: prev.prezzoSoggiorno === 0 ? calcolati.prezzoSoggiorno : prev.prezzoSoggiorno,
       biancheriaCosto: calcolati.biancheriaCosto, // Sempre sincronizzato con la checkbox biancheria
       tassaSoggiorno: calcolati.tassaSoggiorno, // Sempre sincronizzato con adulti * notti
       sconto: calcolati.scontoArrotondamento, // Preimpostato con arrotondamento (aggiornabile manualmente)
-      acconto: prev.acconto === 0 || prev.acconto === calcolati.acconto ? calcolati.acconto : prev.acconto,
+      acconto: prev.acconto === 0 ? calcolati.acconto : prev.acconto,
     }))
   }, [calcolati])
 
