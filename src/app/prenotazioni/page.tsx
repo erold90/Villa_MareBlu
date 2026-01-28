@@ -24,9 +24,19 @@ interface Appartamento {
   colore: string | null
 }
 
+// Tabella pivot per multi-appartamento
+interface PrenotazioneAppartamento {
+  id: number
+  prenotazioneId: number
+  appartamentoId: number
+  prezzoSoggiorno: number
+  appartamento: Appartamento
+}
+
 interface Prenotazione {
   id: number
-  appartamentoId: number
+  // LEGACY: singolo appartamento (retrocompatibilità)
+  appartamentoId: number | null
   ospiteId: number
   checkIn: string
   checkOut: string
@@ -45,7 +55,10 @@ interface Prenotazione {
   stato: string
   fonte: string
   ospite: Ospite
-  appartamento: Appartamento
+  // LEGACY: singolo appartamento
+  appartamento: Appartamento | null
+  // NUOVO: array di appartamenti dalla tabella pivot
+  appartamenti?: PrenotazioneAppartamento[]
 }
 
 const statoConfig: Record<string, { label: string; className: string }> = {
@@ -91,6 +104,28 @@ const coloriAppartamenti: Record<number, string> = {
   2: '#10B981', // green
   3: '#F59E0B', // amber
   4: '#8B5CF6', // violet
+}
+
+// Helper: ottieni tutti gli appartamenti di una prenotazione
+function getAppartamentiPrenotazione(pren: Prenotazione): { id: number; nome: string; colore: string; prezzo?: number }[] {
+  // NUOVO: usa la tabella pivot se disponibile
+  if (pren.appartamenti && pren.appartamenti.length > 0) {
+    return pren.appartamenti.map(pa => ({
+      id: pa.appartamentoId,
+      nome: pa.appartamento.nome,
+      colore: pa.appartamento.colore || coloriAppartamenti[pa.appartamentoId] || '#6B7280',
+      prezzo: pa.prezzoSoggiorno,
+    }))
+  }
+  // LEGACY: fallback al singolo appartamento
+  if (pren.appartamento) {
+    return [{
+      id: pren.appartamentoId || pren.appartamento.id,
+      nome: pren.appartamento.nome,
+      colore: pren.appartamento.colore || coloriAppartamenti[pren.appartamentoId || 0] || '#6B7280',
+    }]
+  }
+  return []
 }
 
 // Genera lista delle stagioni disponibili (da 2025 all'anno corrente + 1)
@@ -197,12 +232,29 @@ export default function PrenotazioniPage() {
       `${pren.ospite.nome} ${pren.ospite.cognome}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (pren.ospite.email && pren.ospite.email.toLowerCase().includes(searchTerm.toLowerCase()))
     const matchStato = filterStato === 'all' || pren.stato === filterStato
-    const matchApp = filterAppartamento === 'all' || pren.appartamentoId === parseInt(filterAppartamento)
+
+    // Filtro appartamento: controlla sia tabella pivot che campo legacy
+    let matchApp = filterAppartamento === 'all'
+    if (!matchApp) {
+      const filterId = parseInt(filterAppartamento)
+      // Controlla tabella pivot
+      if (pren.appartamenti && pren.appartamenti.length > 0) {
+        matchApp = pren.appartamenti.some(pa => pa.appartamentoId === filterId)
+      } else {
+        // Fallback a campo legacy
+        matchApp = pren.appartamentoId === filterId
+      }
+    }
+
     return matchSearch && matchStato && matchApp
   })
 
   const getAppartamentoColore = (pren: Prenotazione) => {
-    return pren.appartamento.colore || coloriAppartamenti[pren.appartamentoId] || '#6B7280'
+    const appartamenti = getAppartamentiPrenotazione(pren)
+    if (appartamenti.length > 0) {
+      return appartamenti[0].colore
+    }
+    return '#6B7280'
   }
 
   if (loading) {
@@ -313,21 +365,32 @@ export default function PrenotazioniPage() {
         {/* Prenotazioni List - Mobile Cards */}
         <div className="lg:hidden space-y-4">
           {filteredPrenotazioni.map((pren) => {
+            const appartamenti = getAppartamentiPrenotazione(pren)
             return (
               <div key={pren.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
-                      style={{ backgroundColor: getAppartamentoColore(pren) }}
-                    >
-                      {pren.appartamentoId}
+                    {/* Badge appartamenti multipli */}
+                    <div className="flex -space-x-2">
+                      {appartamenti.map((app, idx) => (
+                        <div
+                          key={app.id}
+                          className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold border-2 border-white dark:border-gray-800"
+                          style={{ backgroundColor: app.colore, zIndex: appartamenti.length - idx }}
+                        >
+                          {app.id}
+                        </div>
+                      ))}
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 dark:text-white">
                         {pren.ospite.cognome} {pren.ospite.nome}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{pren.appartamento.nome}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {appartamenti.length > 1
+                          ? `${appartamenti.length} appartamenti`
+                          : appartamenti[0]?.nome || 'N/A'}
+                      </p>
                     </div>
                   </div>
                   {/* Pulsante chiamata telefono */}
@@ -438,6 +501,7 @@ export default function PrenotazioniPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filteredPrenotazioni.map((pren) => {
+                  const appartamenti = getAppartamentiPrenotazione(pren)
                   return (
                     <tr key={pren.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="p-4">
@@ -447,15 +511,27 @@ export default function PrenotazioniPage() {
                         <p className="text-sm text-gray-500 dark:text-gray-400">{pren.ospite.nazione || ''}</p>
                       </td>
                       <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-semibold text-sm"
-                            style={{ backgroundColor: getAppartamentoColore(pren) }}
-                          >
-                            {pren.appartamentoId}
-                          </div>
-                          <span className="text-gray-700 dark:text-gray-300">{pren.appartamento.nome}</span>
+                        {/* Badge appartamenti multipli */}
+                        <div className="flex flex-wrap gap-1">
+                          {appartamenti.map(app => (
+                            <div
+                              key={app.id}
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-white text-sm font-medium"
+                              style={{ backgroundColor: app.colore }}
+                              title={app.prezzo ? `${app.nome}: €${app.prezzo}` : app.nome}
+                            >
+                              <span className="font-bold">{app.id}</span>
+                              {appartamenti.length === 1 && (
+                                <span className="hidden xl:inline">{app.nome.replace('Appartamento ', '')}</span>
+                              )}
+                            </div>
+                          ))}
                         </div>
+                        {appartamenti.length > 1 && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {appartamenti.length} appartamenti
+                          </p>
+                        )}
                       </td>
                       <td className="p-4">
                         <p className="text-gray-700 dark:text-gray-300">{formatDate(pren.checkIn)}</p>
@@ -567,28 +643,67 @@ export default function PrenotazioniPage() {
 
             {/* Contenuto Modal */}
             <div className="p-6 space-y-6">
-              {/* Appartamento */}
-              <div className="flex items-center gap-4">
-                <div
-                  className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold"
-                  style={{ backgroundColor: getAppartamentoColore(selectedPrenotazione) }}
-                >
-                  {selectedPrenotazione.appartamentoId}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {selectedPrenotazione.appartamento.nome}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className={cn('text-xs px-2 py-1 rounded-full font-medium', getStatoVisivo(selectedPrenotazione).className)}>
-                      {getStatoVisivo(selectedPrenotazione).label}
-                    </span>
-                    <span className={cn('text-xs px-2 py-1 rounded-full font-medium', fonteConfig[selectedPrenotazione.fonte]?.className)}>
-                      {fonteConfig[selectedPrenotazione.fonte]?.label}
-                    </span>
+              {/* Appartamenti */}
+              {(() => {
+                const appartamenti = getAppartamentiPrenotazione(selectedPrenotazione)
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      {/* Badge appartamenti */}
+                      <div className="flex -space-x-2">
+                        {appartamenti.map((app, idx) => (
+                          <div
+                            key={app.id}
+                            className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold border-2 border-white dark:border-gray-800"
+                            style={{ backgroundColor: app.colore, zIndex: appartamenti.length - idx }}
+                          >
+                            {app.id}
+                          </div>
+                        ))}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {appartamenti.length > 1
+                            ? `${appartamenti.length} Appartamenti`
+                            : appartamenti[0]?.nome || 'N/A'}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <span className={cn('text-xs px-2 py-1 rounded-full font-medium', getStatoVisivo(selectedPrenotazione).className)}>
+                            {getStatoVisivo(selectedPrenotazione).label}
+                          </span>
+                          <span className={cn('text-xs px-2 py-1 rounded-full font-medium', fonteConfig[selectedPrenotazione.fonte]?.className)}>
+                            {fonteConfig[selectedPrenotazione.fonte]?.label}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Breakdown prezzi per appartamento */}
+                    {appartamenti.length > 1 && (
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 space-y-2">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Dettaglio appartamenti:</p>
+                        {appartamenti.map(app => (
+                          <div key={app.id} className="flex justify-between text-sm">
+                            <span className="flex items-center gap-2">
+                              <span
+                                className="w-5 h-5 rounded flex items-center justify-center text-white text-xs font-bold"
+                                style={{ backgroundColor: app.colore }}
+                              >
+                                {app.id}
+                              </span>
+                              {app.nome}
+                            </span>
+                            {app.prezzo && (
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {formatPrice(app.prezzo)}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
+                )
+              })()}
 
               {/* Ospite */}
               <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
@@ -740,7 +855,13 @@ export default function PrenotazioniPage() {
               </div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Elimina Prenotazione</h3>
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Sei sicuro di voler eliminare la prenotazione di <strong>{selectedPrenotazione.ospite.cognome} {selectedPrenotazione.ospite.nome}</strong> per {selectedPrenotazione.appartamento.nome}?
+                Sei sicuro di voler eliminare la prenotazione di <strong>{selectedPrenotazione.ospite.cognome} {selectedPrenotazione.ospite.nome}</strong>
+                {(() => {
+                  const apps = getAppartamentiPrenotazione(selectedPrenotazione)
+                  return apps.length > 1
+                    ? ` per ${apps.length} appartamenti?`
+                    : ` per ${apps[0]?.nome || 'N/A'}?`
+                })()}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 Questa azione non può essere annullata.

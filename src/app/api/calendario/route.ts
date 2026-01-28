@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       accontoPagato: p.accontoPagato,
       saldoPagato: p.saldoPagato,
       fonte: p.fonte,
-      appartamentoNome: p.appartamento.nome,
+      appartamentoNome: p.appartamento?.nome || `Appartamento ${p.appartamentoId}`,
       appartamentoColore: appartamentiConfig.find(a => a.id === p.appartamentoId)?.colore || '#3B82F6',
     }))
 

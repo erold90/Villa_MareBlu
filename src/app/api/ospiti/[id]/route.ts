@@ -45,7 +45,7 @@ export async function GET(
         id: p.id,
         checkIn: p.checkIn.toISOString().split('T')[0],
         checkOut: p.checkOut.toISOString().split('T')[0],
-        appartamento: p.appartamento.nome,
+        appartamento: p.appartamento?.nome || `App ${p.appartamentoId}`,
         totale: p.totale,
         stato: p.stato,
       })),

@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     const movimentiRecenti = prenotazioni.slice(0, 10).map(p => ({
       id: p.id,
       tipo: 'entrata' as const,
-      descrizione: `Prenotazione ${p.ospite.cognome} ${p.ospite.nome} - ${p.appartamento.nome}`,
+      descrizione: `Prenotazione ${p.ospite.cognome} ${p.ospite.nome} - ${p.appartamento?.nome || `App ${p.appartamentoId}`}`,
       importo: p.totale,
       data: p.checkIn.toISOString().split('T')[0],
       metodo: p.fonte,

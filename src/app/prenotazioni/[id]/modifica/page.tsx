@@ -23,9 +23,18 @@ interface Appartamento {
   colore: string | null
 }
 
+// Tabella pivot per multi-appartamento
+interface PrenotazioneAppartamento {
+  id: number
+  prenotazioneId: number
+  appartamentoId: number
+  prezzoSoggiorno: number
+  appartamento: Appartamento
+}
+
 interface Prenotazione {
   id: number
-  appartamentoId: number
+  appartamentoId: number | null
   ospiteId: number
   checkIn: string
   checkOut: string
@@ -59,7 +68,10 @@ interface Prenotazione {
   richiesteSpeciali: string | null
   noteInterne: string | null
   ospite: Ospite
-  appartamento: Appartamento
+  // LEGACY: singolo appartamento
+  appartamento: Appartamento | null
+  // NUOVO: array di appartamenti dalla tabella pivot
+  appartamenti?: PrenotazioneAppartamento[]
 }
 
 export default function ModificaPrenotazionePage({ params }: { params: Promise<{ id: string }> }) {
@@ -429,21 +441,59 @@ BIC/SWIFT: HYEEIT22XXX`
             Torna indietro
           </button>
 
-          {/* Appartamento (non modificabile) */}
+          {/* Appartamento/i (non modificabile) */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Appartamento</h2>
-            <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold"
-                style={{ backgroundColor: prenotazione?.appartamento.colore || '#3B82F6' }}
-              >
-                {prenotazione?.appartamentoId}
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {prenotazione?.appartamenti && prenotazione.appartamenti.length > 1 ? 'Appartamenti' : 'Appartamento'}
+            </h2>
+            {/* Mostra appartamenti multipli se disponibili */}
+            {prenotazione?.appartamenti && prenotazione.appartamenti.length > 0 ? (
+              <div className="space-y-3">
+                {prenotazione.appartamenti.map(pa => (
+                  <div key={pa.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold"
+                        style={{ backgroundColor: pa.appartamento.colore || '#3B82F6' }}
+                      >
+                        {pa.appartamentoId}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white">{pa.appartamento.nome}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Non modificabile</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Prezzo soggiorno</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{formatPrice(pa.prezzoSoggiorno)}</p>
+                    </div>
+                  </div>
+                ))}
+                {prenotazione.appartamenti.length > 1 && (
+                  <div className="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Totale appartamenti: <span className="font-semibold text-gray-900 dark:text-white">
+                        {formatPrice(prenotazione.appartamenti.reduce((sum, pa) => sum + pa.prezzoSoggiorno, 0))}
+                      </span>
+                    </p>
+                  </div>
+                )}
               </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white">{prenotazione?.appartamento.nome}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Non modificabile</p>
+            ) : (
+              /* LEGACY: singolo appartamento */
+              <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold"
+                  style={{ backgroundColor: prenotazione?.appartamento?.colore || '#3B82F6' }}
+                >
+                  {prenotazione?.appartamentoId}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white">{prenotazione?.appartamento?.nome || 'N/A'}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Non modificabile</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Date */}

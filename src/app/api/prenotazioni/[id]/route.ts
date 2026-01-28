@@ -11,7 +11,12 @@ export async function GET(
     const prenotazione = await prisma.prenotazione.findUnique({
       where: { id: parseInt(id) },
       include: {
+        // LEGACY: singolo appartamento per retrocompatibilità
         appartamento: true,
+        // NUOVO: tutti gli appartamenti dalla tabella pivot
+        appartamenti: {
+          include: { appartamento: true }
+        },
         ospite: true,
       },
     })
@@ -39,6 +44,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
+    const prenotazioneId = parseInt(id)
     const body = await request.json()
 
     // Aggiorna i dati dell'ospite se forniti
@@ -56,9 +62,31 @@ export async function PUT(
       })
     }
 
+    // Se vengono forniti nuovi appartamenti, aggiorna la tabella pivot
+    if (body.appartamentiIds && body.appartamentiIds.length > 0) {
+      const prezziPerAppartamento = body.prezziPerAppartamento || {}
+
+      // Elimina i vecchi record pivot
+      await prisma.prenotazioneAppartamento.deleteMany({
+        where: { prenotazioneId }
+      })
+
+      // Crea i nuovi record pivot
+      await prisma.prenotazioneAppartamento.createMany({
+        data: body.appartamentiIds.map((appartamentoId: number) => ({
+          prenotazioneId,
+          appartamentoId,
+          prezzoSoggiorno: prezziPerAppartamento[appartamentoId] ||
+            (body.prezzoSoggiorno / body.appartamentiIds.length)
+        }))
+      })
+    }
+
     const prenotazione = await prisma.prenotazione.update({
-      where: { id: parseInt(id) },
+      where: { id: prenotazioneId },
       data: {
+        // LEGACY: aggiorna appartamentoId con il primo appartamento (se forniti)
+        appartamentoId: body.appartamentiIds?.[0] ?? undefined,
         checkIn: body.checkIn ? new Date(body.checkIn) : undefined,
         checkOut: body.checkOut ? new Date(body.checkOut) : undefined,
         numAdulti: body.numAdulti,
@@ -96,13 +124,18 @@ export async function PUT(
         noteInterne: body.noteInterne || null,
       },
       include: {
+        // LEGACY: singolo appartamento
         appartamento: true,
+        // NUOVO: tutti gli appartamenti dalla tabella pivot
+        appartamenti: {
+          include: { appartamento: true }
+        },
         ospite: true,
       },
     })
 
     // Sincronizza con Supabase (villamareblu.it) in background
-    // Usa utility diretta invece di fetch() per evitare problemi con VERCEL_URL
+    // La sync userà l'array di appartamenti dalla tabella pivot
     syncReservationToSupabase(prenotazione, prenotazione.ospite).catch(console.error)
 
     return NextResponse.json(prenotazione)

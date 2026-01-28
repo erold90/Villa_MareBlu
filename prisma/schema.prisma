@@ -26,7 +26,11 @@ model Appartamento {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
+  // LEGACY: relazione diretta (retrocompatibilità)
   prenotazioni   Prenotazione[]
+  // NUOVO: relazione many-to-many tramite tabella pivot
+  prenotazioniPivot PrenotazioneAppartamento[] @relation("AppartamentiPrenotazioni")
+
   periodiPrezzo  PeriodoPrezzo[]
   blocchi        BloccoCalendario[]
 }
@@ -72,7 +76,9 @@ model Ospite {
 // Prenotazioni
 model Prenotazione {
   id                  Int           @id @default(autoincrement())
-  appartamentoId      Int
+  // LEGACY: appartamentoId mantenuto per retrocompatibilità (primo appartamento)
+  // Sarà rimosso in futuro - usare la relazione appartamenti[]
+  appartamentoId      Int?
   ospiteId            Int
 
   checkIn             DateTime
@@ -128,10 +134,31 @@ model Prenotazione {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  appartamento        Appartamento  @relation(fields: [appartamentoId], references: [id])
+  // LEGACY: relazione con singolo appartamento (retrocompatibilità)
+  appartamento        Appartamento? @relation(fields: [appartamentoId], references: [id])
+  // NUOVO: relazione many-to-many tramite tabella pivot
+  appartamenti        PrenotazioneAppartamento[]
+
   ospite              Ospite        @relation(fields: [ospiteId], references: [id])
   pagamenti           Pagamento[]
   spese               Spesa[]
+}
+
+// TABELLA PIVOT: Relazione Many-to-Many Prenotazione <-> Appartamento
+model PrenotazioneAppartamento {
+  id              Int           @id @default(autoincrement())
+  prenotazioneId  Int
+  appartamentoId  Int
+  prezzoSoggiorno Float         // Prezzo calcolato per questo specifico appartamento
+
+  createdAt       DateTime      @default(now())
+
+  prenotazione    Prenotazione  @relation(fields: [prenotazioneId], references: [id], onDelete: Cascade)
+  appartamento    Appartamento  @relation("AppartamentiPrenotazioni", fields: [appartamentoId], references: [id])
+
+  @@unique([prenotazioneId, appartamentoId])
+  @@index([prenotazioneId])
+  @@index([appartamentoId])
 }
 
 // Pagamenti

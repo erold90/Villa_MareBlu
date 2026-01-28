@@ -80,14 +80,28 @@ interface SupabaseReservation {
 
 /**
  * Converte una prenotazione dal formato Pannello al formato Supabase
+ * Supporta sia il vecchio schema (appartamentoId) sia il nuovo (tabella pivot appartamenti)
  */
 function convertToSupabaseReservation(
   prenotazione: any,
   ospite: any
 ): SupabaseReservation {
+  // NUOVO: usa l'array dalla tabella pivot se disponibile
+  let apartmentIds: string[] = []
+
+  if (prenotazione.appartamenti && prenotazione.appartamenti.length > 0) {
+    // Nuovo schema: leggi dalla tabella pivot
+    apartmentIds = prenotazione.appartamenti.map(
+      (pa: any) => `appartamento-${pa.appartamentoId}`
+    )
+  } else if (prenotazione.appartamentoId) {
+    // LEGACY: fallback al vecchio campo singolo
+    apartmentIds = [`appartamento-${prenotazione.appartamentoId}`]
+  }
+
   return {
     id: generateUUID(prenotazione.id),
-    apartment_ids: [`appartamento-${prenotazione.appartamentoId}`],
+    apartment_ids: apartmentIds,
     guest_name: `${ospite.nome} ${ospite.cognome}`.trim(),
     guest_phone: ospite.telefono || null,
     start_date: new Date(prenotazione.checkIn).toISOString().split('T')[0],

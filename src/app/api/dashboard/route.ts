@@ -193,7 +193,7 @@ export async function GET() {
       id: p.id,
       ospite: `${p.ospite.cognome} ${p.ospite.nome}`,
       appartamento: p.appartamentoId,
-      appartamentoNome: p.appartamento.nome,
+      appartamentoNome: p.appartamento?.nome || `Appartamento ${p.appartamentoId}`,
       data: p.checkIn.toISOString(),
       ospiti: p.numAdulti + p.numBambini,
     }))
@@ -203,7 +203,7 @@ export async function GET() {
       id: p.id,
       ospite: `${p.ospite.cognome} ${p.ospite.nome}`,
       appartamento: p.appartamentoId,
-      appartamentoNome: p.appartamento.nome,
+      appartamentoNome: p.appartamento?.nome || `Appartamento ${p.appartamentoId}`,
       data: p.checkOut.toISOString(),
       ospiti: p.numAdulti + p.numBambini,
     }))

@@ -243,7 +243,7 @@ export async function getContestoAssistente() {
   const prenotazioniFutureFormattate = prenotazioniFuture.map((p) => ({
     id: p.id,
     appartamentoId: p.appartamentoId,
-    appartamento: p.appartamento.nome,
+    appartamento: p.appartamento?.nome || `App ${p.appartamentoId}`,
     ospite: `${p.ospite.nome} ${p.ospite.cognome}`,
     ospiteId: p.ospiteId,
     checkIn: p.checkIn.toISOString().split('T')[0],
@@ -263,7 +263,7 @@ export async function getContestoAssistente() {
   const tuttePrenotazioniFormattate = tuttePrenotazioni.map((p) => ({
     id: p.id,
     appartamentoId: p.appartamentoId,
-    appartamento: p.appartamento.nome,
+    appartamento: p.appartamento?.nome || `App ${p.appartamentoId}`,
     ospite: `${p.ospite.nome} ${p.ospite.cognome}`,
     ospiteId: p.ospiteId,
     checkIn: p.checkIn.toISOString().split('T')[0],
@@ -310,14 +310,14 @@ export async function getContestoAssistente() {
   // Formatta check-in/out
   const checkInsFormattati = prossimiMovimenti.checkIns.map((p) => ({
     data: p.checkIn.toISOString().split('T')[0],
-    appartamento: p.appartamento.nome,
+    appartamento: p.appartamento?.nome || `App ${p.appartamentoId}`,
     ospite: `${p.ospite.nome} ${p.ospite.cognome}`,
     ospiti: p.numAdulti + p.numBambini,
   }))
 
   const checkOutsFormattati = prossimiMovimenti.checkOuts.map((p) => ({
     data: p.checkOut.toISOString().split('T')[0],
-    appartamento: p.appartamento.nome,
+    appartamento: p.appartamento?.nome || `App ${p.appartamentoId}`,
     ospite: `${p.ospite.nome} ${p.ospite.cognome}`,
   }))
 

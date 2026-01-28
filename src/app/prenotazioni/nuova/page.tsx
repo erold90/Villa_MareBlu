@@ -794,6 +794,42 @@ BIC/SWIFT: ${BIC}`
               <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Modificabile</span>
             </div>
 
+            {/* Breakdown prezzi per appartamento (solo se più di 1 appartamento) */}
+            {formData.appartamentiIds.length > 1 && formData.checkIn && formData.checkOut && (
+              <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Dettaglio per appartamento:
+                </p>
+                <div className="space-y-2">
+                  {formData.appartamentiIds.map(appId => {
+                    const app = appartamentiConfig.find(a => a.id === appId)
+                    const anno = new Date(formData.checkIn).getFullYear()
+                    const risultato = calcolaPrezzoSoggiorno(anno, formData.checkIn, formData.checkOut, appId)
+                    return (
+                      <div key={appId} className="flex justify-between items-center text-sm">
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-bold"
+                            style={{ backgroundColor: app?.colore || '#6B7280' }}
+                          >
+                            {appId}
+                          </span>
+                          <span className="text-gray-600 dark:text-gray-400">{app?.nome || `App ${appId}`}</span>
+                        </span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {formatPrice(risultato.prezzoTotale)}
+                        </span>
+                      </div>
+                    )
+                  })}
+                  <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-600 flex justify-between font-medium text-gray-900 dark:text-white">
+                    <span>Totale appartamenti:</span>
+                    <span>{formatPrice(calcolati.prezzoSoggiorno)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Suggerimento automatico */}
             {calcolati.prezzoSoggiorno > 0 && prezziManuali.prezzoSoggiorno !== calcolati.prezzoSoggiorno && (
               <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">

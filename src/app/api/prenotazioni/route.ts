@@ -11,17 +11,18 @@ export async function POST(request: NextRequest) {
 
     // Verifica sovrapposizione per ogni appartamento selezionato
     // IMPORTANTE: check-out può coincidere con check-in (stesso giorno turnover)
-    // Quindi: nuovoCheckIn < esistenteCheckOut AND nuovoCheckOut > esistenteCheckIn
+    // Controlla sia la vecchia relazione (appartamentoId) sia la nuova (pivot)
     const conflitti = []
 
     for (const appartamentoId of body.appartamentiIds) {
-      const prenotazioniEsistenti = await prisma.prenotazione.findMany({
+      // Controlla prenotazioni con vecchio schema (appartamentoId diretto)
+      const prenotazioniDirette = await prisma.prenotazione.findMany({
         where: {
           appartamentoId: appartamentoId,
           stato: { notIn: ['cancelled'] },
           AND: [
-            { checkIn: { lt: checkOutDate } },  // check-in esistente < nuovo check-out
-            { checkOut: { gt: checkInDate } },   // check-out esistente > nuovo check-in
+            { checkIn: { lt: checkOutDate } },
+            { checkOut: { gt: checkInDate } },
           ],
         },
         include: {
@@ -30,10 +31,44 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      // Controlla prenotazioni con nuovo schema (tabella pivot)
+      const prenotazioniPivot = await prisma.prenotazione.findMany({
+        where: {
+          stato: { notIn: ['cancelled'] },
+          appartamenti: {
+            some: { appartamentoId: appartamentoId }
+          },
+          AND: [
+            { checkIn: { lt: checkOutDate } },
+            { checkOut: { gt: checkInDate } },
+          ],
+        },
+        include: {
+          ospite: true,
+          appartamenti: {
+            include: { appartamento: true }
+          },
+        },
+      })
+
+      // Combina i risultati evitando duplicati
+      const prenotazioniEsistenti = [...prenotazioniDirette]
+      for (const pren of prenotazioniPivot) {
+        if (!prenotazioniEsistenti.find(p => p.id === pren.id)) {
+          prenotazioniEsistenti.push({
+            ...pren,
+            appartamento: pren.appartamenti.find(a => a.appartamentoId === appartamentoId)?.appartamento || null,
+          } as any)
+        }
+      }
+
       if (prenotazioniEsistenti.length > 0) {
         for (const pren of prenotazioniEsistenti) {
+          const nomeAppartamento = pren.appartamento?.nome ||
+            (pren as any).appartamenti?.find((a: any) => a.appartamentoId === appartamentoId)?.appartamento?.nome ||
+            `Appartamento ${appartamentoId}`
           conflitti.push({
-            appartamento: pren.appartamento.nome,
+            appartamento: nomeAppartamento,
             ospite: `${pren.ospite.cognome} ${pren.ospite.nome}`,
             checkIn: pren.checkIn.toISOString().split('T')[0],
             checkOut: pren.checkOut.toISOString().split('T')[0],
@@ -76,55 +111,75 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Crea le prenotazioni per ogni appartamento selezionato
-    const prenotazioniCreate = []
+    // NUOVO: Crea UNA sola prenotazione con N appartamenti tramite tabella pivot
+    // Estrai i prezzi per appartamento dal body (se forniti)
+    const prezziPerAppartamento = body.prezzi?.perAppartamento || {}
 
-    for (const appartamentoId of body.appartamentiIds) {
-      const prenotazione = await prisma.prenotazione.create({
-        data: {
-          appartamentoId: appartamentoId,
-          ospiteId: ospite.id,
-          checkIn: new Date(body.checkIn),
-          checkOut: new Date(body.checkOut),
-          numAdulti: body.numAdulti || 2,
-          numBambini: body.numBambini || 0,
-          numNeonati: body.numNeonati || 0,
-          animali: body.animali || false,
-          animaliDettaglio: body.animaliDettaglio || null,
-          biancheria: body.biancheria || false,
-          bianchieriaSets: body.biancheria ? ((body.numAdulti || 0) + (body.numBambini || 0) - (body.numNeonati || 0)) : 0,
-          biancheriaCosto: body.prezzi?.biancheriaCosto || 0,
-          prezzoSoggiorno: body.prezzi?.prezzoSoggiorno || 0,
-          prezzoExtra: body.prezzi?.extra || 0,
-          tassaSoggiorno: body.prezzi?.tassaSoggiorno || 0,
-          totale: body.prezzi?.totale || 0,
-          acconto: body.prezzi?.acconto || 0,
-          accontoPagato: body.accontoPagato || false,
-          accontoCausale: body.accontoCausale || null,
-          accontoDataBonifico: body.accontoDataBonifico ? new Date(body.accontoDataBonifico) : null,
-          accontoNomePagante: body.accontoNomePagante || null,
-          accontoRiferimento: body.accontoRiferimento || null,
-          accontoData: body.accontoPagato ? new Date() : null,
-          saldo: body.prezzi?.saldo || 0,
-          stato: 'confirmed',
-          fonte: body.fonte || 'direct',
-          fonteRiferimento: body.fonteRiferimento || null,
-          richiesteSpeciali: body.richiesteSpeciali || null,
-          noteInterne: body.noteInterne || null,
-        },
-        include: {
-          appartamento: true,
-          ospite: true,
-        },
-      })
-      prenotazioniCreate.push(prenotazione)
-
-      // Sincronizza con Supabase (villamareblu.it) in background
-      // Usa utility diretta invece di fetch() per evitare problemi con VERCEL_URL
-      syncReservationToSupabase(prenotazione, prenotazione.ospite).catch(console.error)
+    // Calcola prezzoSoggiorno totale (somma dei singoli appartamenti)
+    let prezzoSoggiornoTotale = body.prezzi?.prezzoSoggiorno || 0
+    if (Object.keys(prezziPerAppartamento).length > 0) {
+      prezzoSoggiornoTotale = Object.values(prezziPerAppartamento).reduce(
+        (sum: number, prezzo: any) => sum + (prezzo || 0), 0
+      )
     }
 
-    return NextResponse.json(prenotazioniCreate, { status: 201 })
+    // Crea la prenotazione principale
+    const prenotazione = await prisma.prenotazione.create({
+      data: {
+        // LEGACY: primo appartamento per retrocompatibilità
+        appartamentoId: body.appartamentiIds[0],
+        ospiteId: ospite.id,
+        checkIn: new Date(body.checkIn),
+        checkOut: new Date(body.checkOut),
+        numAdulti: body.numAdulti || 2,
+        numBambini: body.numBambini || 0,
+        numNeonati: body.numNeonati || 0,
+        animali: body.animali || false,
+        animaliDettaglio: body.animaliDettaglio || null,
+        biancheria: body.biancheria || false,
+        bianchieriaSets: body.biancheria ? ((body.numAdulti || 0) + (body.numBambini || 0) - (body.numNeonati || 0)) : 0,
+        biancheriaCosto: body.prezzi?.biancheriaCosto || 0,
+        prezzoSoggiorno: prezzoSoggiornoTotale,
+        prezzoExtra: body.prezzi?.extra || 0,
+        tassaSoggiorno: body.prezzi?.tassaSoggiorno || 0,
+        totale: body.prezzi?.totale || 0,
+        acconto: body.prezzi?.acconto || 0,
+        accontoPagato: body.accontoPagato || false,
+        accontoCausale: body.accontoCausale || null,
+        accontoDataBonifico: body.accontoDataBonifico ? new Date(body.accontoDataBonifico) : null,
+        accontoNomePagante: body.accontoNomePagante || null,
+        accontoRiferimento: body.accontoRiferimento || null,
+        accontoData: body.accontoPagato ? new Date() : null,
+        saldo: body.prezzi?.saldo || 0,
+        stato: 'confirmed',
+        fonte: body.fonte || 'direct',
+        fonteRiferimento: body.fonteRiferimento || null,
+        richiesteSpeciali: body.richiesteSpeciali || null,
+        noteInterne: body.noteInterne || null,
+        // NUOVO: crea i record pivot per ogni appartamento
+        appartamenti: {
+          create: body.appartamentiIds.map((appartamentoId: number) => ({
+            appartamentoId: appartamentoId,
+            // Usa il prezzo specifico se fornito, altrimenti dividi equamente
+            prezzoSoggiorno: prezziPerAppartamento[appartamentoId] ||
+              (prezzoSoggiornoTotale / body.appartamentiIds.length)
+          }))
+        }
+      },
+      include: {
+        appartamento: true,
+        appartamenti: {
+          include: { appartamento: true }
+        },
+        ospite: true,
+      },
+    })
+
+    // Sincronizza con Supabase (villamareblu.it) in background
+    // La sync userà l'array di appartamenti dalla tabella pivot
+    syncReservationToSupabase(prenotazione, prenotazione.ospite).catch(console.error)
+
+    return NextResponse.json(prenotazione, { status: 201 })
   } catch (error) {
     console.error('Errore creazione prenotazione:', error)
     return NextResponse.json(
@@ -163,7 +218,12 @@ export async function GET(request: NextRequest) {
     const prenotazioni = await prisma.prenotazione.findMany({
       where: whereClause,
       include: {
+        // LEGACY: singolo appartamento per retrocompatibilità
         appartamento: true,
+        // NUOVO: tutti gli appartamenti dalla tabella pivot
+        appartamenti: {
+          include: { appartamento: true }
+        },
         ospite: true,
       },
       orderBy: { checkIn: 'desc' },
