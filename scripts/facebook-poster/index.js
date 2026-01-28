@@ -280,16 +280,21 @@ const GRUPPI = [
 // ============================================
 // FOTO DA ALLEGARE
 // ============================================
-const FOTO_DIR = '/Users/danielelore/Downloads/Post';
+const FOTO_DIR = '/Users/danielelore/Desktop/VillaMareBlu_Facebook';
 const FOTO = [
-  "1.jpg",
-  "2.jpg",
-  "3.jpg",
-  "4.jpg",
-  "5.jpg",
-  "6.jpg",
-  "7.jpg",
-  "8.png",
+  "01_HERO_vista_drone.jpg",
+  "02_terrazzo_vista_mare.jpg",
+  "03_tavolo_terrazzo_mare.jpg",
+  "04_veranda_archi_fiori.jpg",
+  "05_terrazzo_vista_aperta.jpg",
+  "06_camera_blu_tramonto.jpg",
+  "07_camera_finestra.jpg",
+  "08_cucina_vista_mare.jpg",
+  "09_veranda_BBQ_forno.jpg",
+  "10_facciata_villa_palme.jpg",
+  "11_BONUS_zona_pranzo_pietra.jpg",
+  "12_BONUS_viale_ulivo.jpg",
+  "13_BONUS_drone_alternativa.jpg",
 ];
 
 // ============================================
