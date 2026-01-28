@@ -199,6 +199,9 @@ export async function syncReservationToSupabase(
 /**
  * Elimina una prenotazione da Supabase
  * Chiamare dopo DELETE di una prenotazione
+ *
+ * Cerca per UUID deterministico E per device_id come fallback
+ * (utile per record creati prima della migrazione multi-appartamento)
  */
 export async function deleteReservationFromSupabase(
   prenotazioneId: number
@@ -214,18 +217,27 @@ export async function deleteReservationFromSupabase(
     }
 
     const uuid = generateUUID(prenotazioneId)
+    const deviceId = `pannello-${prenotazioneId}`
 
-    const { error } = await supabase
+    // Prima prova con UUID deterministico
+    const { error: error1 } = await supabase
       .from('reservations')
       .delete()
       .eq('id', uuid)
 
-    if (error) {
-      console.error(`[SYNC] Errore eliminazione:`, error)
+    // Poi prova anche con device_id come fallback
+    // (per record creati con UUID diversi prima della migrazione)
+    const { error: error2 } = await supabase
+      .from('reservations')
+      .delete()
+      .eq('device_id', deviceId)
+
+    if (error1 && error2) {
+      console.error(`[SYNC] Errore eliminazione:`, error1, error2)
       return {
         success: false,
         message: `Errore eliminazione prenotazione ${prenotazioneId}`,
-        error: error.message
+        error: error1.message
       }
     }
 
